@@ -36,7 +36,3 @@ and support smarter electricity scheduling.
 
 Open `ecowatt-with-iot.html` in a web browser.
 
-## Team
-
-HackIndia 2026
-Team Tech Dreamers
