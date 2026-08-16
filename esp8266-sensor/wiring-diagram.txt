@@ -1,0 +1,32 @@
+EcoWatt ESP8266 Sensor — Wiring Guide
+======================================
+
+CT SENSOR (SCT-013-100) to ESP8266:
+─────────────────────────────────────
+
+  CT Sensor Pin 1 ──┬── 10Ω Burden Resistor ──┬── A0 (ESP8266)
+                    │                           │
+  CT Sensor Pin 2 ──┴───────────────────────────┴── GND
+
+  Also add:
+  ┌── 10kΩ resistor from 3.3V → A0
+  └── 10kΩ resistor from A0   → GND
+  (This creates a 1.65V bias for the AC signal)
+
+POWER:
+  ESP8266 VCC → 3.3V
+  ESP8266 GND → GND
+  USB → Computer (for Serial mode) OR 5V adapter (for WiFi/MQTT mode)
+
+CALIBRATION:
+  Default: 111.1 (for 100A/50mA CT sensor)
+  For 30A CT: use 30.0
+  To calibrate: compare reading with known load (e.g. 100W bulb = 0.43A)
+
+COMPONENTS NEEDED:
+  - NodeMCU ESP8266 (or Wemos D1 Mini)
+  - SCT-013-100 CT Current Sensor
+  - 10Ω burden resistor (if CT has no built-in)
+  - 2× 10kΩ resistors (voltage divider)
+  - USB cable (for Serial mode)
+  - Breadboard + jumper wires

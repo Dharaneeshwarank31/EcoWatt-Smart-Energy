@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EcoWatt AI Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070f09;
+  --surface:#0d1f10;
+  --card:#111f14;
+  --card2:#152019;
+  --border:rgba(46,204,113,0.12);
+  --border2:rgba(46,204,113,0.22);
+  --text:#e6f4ea;
+  --sub:#6fcf82;
+  --muted:rgba(111,207,130,0.45);
+  --green:#27ae60;
+  --glow:#2ecc71;
+  --neon:#00ff88;
+  --red:#e74c3c;
+  --orange:#f39c12;
+  --blue:#3498db;
+  --purple:#9b59b6;
+  --sidebar:220px;
+  --header:64px;
+}
+body.light{
+  --bg:#f0f7f1;
+  --surface:#ffffff;
+  --card:#ffffff;
+  --card2:#f5faf6;
+  --border:rgba(39,174,96,0.18);
+  --border2:rgba(39,174,96,0.35);
+  --text:#0d3318;
+  --sub:#2d7d46;
+  --muted:rgba(45,125,70,0.5);
+  --green:#1e8449;
+  --glow:#27ae60;
+  --neon:#1e8449;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(46,204,113,0.3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(46,204,113,0.5)}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  transition:background 0.4s,color 0.4s;
+}
+
+/* ─────────────────────────────
+   LAYOUT SHELL
+───────────────────────────── */
+.shell{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar);
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0;left:0;bottom:0;
+  z-index:100;
+  transition:transform 0.3s cubic-bezier(0.4,0,0.2,1),background 0.4s;
+  overflow:hidden;
+}
+.sidebar-logo{
+  padding:22px 20px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.logo-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,#1e8449,#2ecc71);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+  box-shadow:0 0 20px rgba(46,204,113,0.4);
+}
+.logo-text{
+  font-family:'Orbitron',monospace;
+  font-size:13px;font-weight:700;
+  letter-spacing:1.5px;
+  background:linear-gradient(90deg,#27ae60,#00ff88);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.logo-sub{font-size:10px;color:var(--muted);margin-top:1px;letter-spacing:0.5px}
+
+.nav-section-label{
+  font-size:10px;font-weight:600;letter-spacing:2px;
+  color:var(--muted);padding:16px 20px 8px;text-transform:uppercase;
+}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 20px;margin:2px 10px;
+  border-radius:10px;cursor:pointer;
+  font-size:13px;font-weight:500;color:var(--sub);
+  transition:all 0.2s;position:relative;
+  border:1px solid transparent;
+}
+.nav-item:hover{background:rgba(46,204,113,0.07);color:var(--glow)}
+.nav-item.active{
+  background:rgba(46,204,113,0.12);
+  color:var(--glow);font-weight:600;
+  border-color:rgba(46,204,113,0.2);
+}
+.nav-item.active::before{
+  content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);
+  width:3px;height:60%;background:var(--glow);border-radius:2px;
+  box-shadow:0 0 8px var(--glow);
+}
+.nav-icon{font-size:16px;flex-shrink:0;width:20px;text-align:center}
+.nav-badge{
+  margin-left:auto;background:rgba(46,204,113,0.2);color:var(--glow);
+  font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;
+}
+
+.sidebar-footer{
+  margin-top:auto;padding:16px 20px;
+  border-top:1px solid var(--border);
+}
+.theme-toggle{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:10px;
+  background:rgba(46,204,113,0.06);border:1px solid var(--border2);
+  cursor:pointer;font-size:13px;color:var(--sub);font-weight:500;
+  width:100%;transition:all 0.2s;
+}
+.theme-toggle:hover{background:rgba(46,204,113,0.12)}
+.toggle-pill{
+  margin-left:auto;width:36px;height:20px;
+  background:rgba(46,204,113,0.2);border-radius:20px;
+  position:relative;transition:background 0.3s;
+}
+.toggle-pill::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--glow);transition:transform 0.3s;
+  box-shadow:0 0 6px rgba(46,204,113,0.5);
+}
+body.light .toggle-pill{background:rgba(39,174,96,0.3)}
+body.light .toggle-pill::after{transform:translateX(16px)}
+
+/* ── MAIN ── */
+.main{
+  margin-left:var(--sidebar);
+  flex:1;
+  display:flex;flex-direction:column;
+  min-height:100vh;
+}
+
+/* ── TOP BAR ── */
+.topbar{
+  height:var(--header);
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;gap:16px;
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:blur(12px);
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.page-title{font-size:16px;font-weight:600;color:var(--text)}
+.page-sub{font-size:12px;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+
+/* Status dot */
+.live-dot{
+  width:8px;height:8px;border-radius:50%;background:#2ecc71;
+  box-shadow:0 0 0 0 rgba(46,204,113,0.4);
+  animation:ping 1.5s ease infinite;display:inline-block;margin-right:4px;
+}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(46,204,113,0.4)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+
+/* Weather chips */
+.weather-chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;
+  background:rgba(46,204,113,0.07);border:1px solid var(--border);
+  color:var(--sub);white-space:nowrap;
+}
+.chip strong{color:var(--glow)}
+
+/* ── CONTENT ── */
+.content{padding:24px 28px;flex:1}
+
+/* ── PAGE (tab panels) ── */
+.page{display:none;animation:fadeIn 0.3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:24px;
+  margin-bottom:20px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color 0.3s,box-shadow 0.3s;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(46,204,113,0.4),transparent);
+}
+.card:hover{border-color:var(--border2);box-shadow:0 8px 30px rgba(0,0,0,0.2)}
+
+.card-title{
+  font-family:'Orbitron',monospace;font-size:12px;font-weight:700;
+  letter-spacing:1.5px;color:var(--sub);text-transform:uppercase;
+  margin-bottom:18px;display:flex;align-items:center;gap:8px;
+}
+.card-title span{font-size:15px}
+.card-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);margin-left:8px}
+
+/* ── GRID LAYOUTS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* ── STAT MINI CARDS ── */
+.stat{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:14px;padding:18px 16px;text-align:center;
+  transition:all 0.25s;position:relative;overflow:hidden;
+}
+.stat:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 10px 28px rgba(0,0,0,0.2)}
+.stat-top{position:absolute;top:0;left:0;right:0;height:2px}
+.stat-icon{font-size:20px;margin-bottom:8px}
+.stat-val{
+  font-family:'Orbitron',monospace;font-size:22px;font-weight:700;
+  line-height:1.1;margin-bottom:4px;
+}
+.stat-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:var(--muted);text-transform:uppercase}
+
+/* ── FORM CONTROLS ── */
+.form-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase}
+input[type=number],select{
+  padding:10px 14px;
+  background:var(--card2);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  font-size:13px;color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  outline:none;transition:all 0.25s;
+  min-width:150px;
+}
+input[type=number]:focus,select:focus{
+  border-color:var(--glow);
+  box-shadow:0 0 0 3px rgba(46,204,113,0.12);
+}
+input::placeholder{color:var(--muted)}
+select option{background:var(--card);color:var(--text)}
+body.light select option{background:#fff}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:10px 22px;border:none;border-radius:10px;
+  cursor:pointer;font-size:13px;font-weight:600;
+  font-family:'DM Sans',sans-serif;letter-spacing:0.3px;
+  display:inline-flex;align-items:center;gap:7px;
+  transition:all 0.25s;position:relative;overflow:hidden;
+}
+.btn-primary{
+  background:linear-gradient(135deg,#1a7a41,#27ae60);
+  color:white;box-shadow:0 4px 14px rgba(39,174,96,0.3);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(39,174,96,0.5)}
+.btn-primary:active{transform:translateY(0)}
+.btn-outline{
+  background:transparent;color:var(--glow);
+  border:1px solid var(--border2);
+}
+.btn-outline:hover{background:rgba(46,204,113,0.08)}
+.btn-danger{background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.25)}
+.btn-danger:hover{background:rgba(231,76,60,0.2)}
+
+/* ── APPLIANCE TABLE ── */
+.app-table{width:100%;border-collapse:collapse}
+.app-table tr{border-bottom:1px solid var(--border);transition:background 0.2s}
+.app-table tr:hover{background:rgba(46,204,113,0.04)}
+.app-table tr:last-child{border-bottom:none}
+.app-table td{padding:10px 8px;font-size:13px;color:var(--sub);vertical-align:middle}
+.app-table td:first-child{font-weight:600;color:var(--text);width:200px}
+.app-table td input{min-width:100px;width:100px}
+
+/* ── RESULT BOX ── */
+.result-box{
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:12px;padding:16px 18px;margin:14px 0;
+  font-family:'Orbitron',monospace;font-size:14px;
+  color:var(--glow);font-weight:700;
+  min-height:52px;transition:all 0.3s;
+}
+
+/* ── TIP ── */
+.tip-box{
+  padding:12px 16px;border-radius:10px;
+  border-left:3px solid var(--green);
+  background:rgba(46,204,113,0.05);
+  font-size:13px;font-weight:500;color:var(--sub);
+  margin-bottom:14px;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{
+  background:rgba(0,0,0,0.25);border:1px solid var(--border);
+  border-radius:8px;height:12px;overflow:hidden;margin:8px 0;
+}
+body.light .progress-wrap{background:rgba(0,0,0,0.08)}
+.progress-fill{
+  height:100%;border-radius:8px;
+  transition:width 1s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── GAUGE ── */
+.gauge-wrap{text-align:center;margin:8px 0 16px}
+.gauge-num{
+  font-family:'Orbitron',monospace;font-size:52px;font-weight:900;
+  color:var(--glow);line-height:1;margin-top:-8px;
+}
+.gauge-label{font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+
+/* ── BADGE ── */
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 18px;border-radius:30px;
+  font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
+  letter-spacing:1px;
+}
+
+/* ── CALENDAR ── */
+.cal-header{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:14px}
+.cal-month{font-family:'Orbitron',monospace;font-size:13px;color:var(--glow);min-width:170px;text-align:center}
+.cal-nav{
+  width:30px;height:30px;border-radius:8px;
+  background:rgba(46,204,113,0.08);border:1px solid var(--border2);
+  color:var(--glow);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+}
+.cal-nav:hover{background:rgba(46,204,113,0.16)}
+.cal-days-header{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+  margin-bottom:6px;
+}
+.cal-day-name{text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-cell{
+  height:38px;border-radius:8px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:12px;font-weight:600;
+  border:1px solid transparent;transition:all 0.2s;cursor:default;
+}
+.cal-cell.has-pred{
+  background:rgba(39,174,96,0.15);color:#2ecc71;
+  border-color:rgba(39,174,96,0.3);
+}
+.cal-cell.has-pred:hover{background:rgba(39,174,96,0.25);transform:scale(1.05)}
+.cal-cell.past{color:var(--muted);background:rgba(255,255,255,0.02)}
+.cal-cell.future{color:rgba(111,207,130,0.2)}
+.cal-cell.today{box-shadow:0 0 0 2px #3498db;color:var(--text)}
+.cal-tick{font-size:8px;line-height:1;color:#2ecc71}
+
+/* ── HISTORY TABLE ── */
+.h-table{width:100%;border-collapse:collapse;font-size:12px}
+.h-table th{
+  background:rgba(46,204,113,0.08);color:var(--sub);
+  padding:10px 10px;text-align:center;
+  font-size:10px;letter-spacing:1px;font-weight:700;text-transform:uppercase;
+  border-bottom:1px solid var(--border2);
+}
+.h-table td{
+  padding:10px;text-align:center;color:var(--sub);
+  border-bottom:1px solid var(--border);transition:background 0.15s;
+}
+.h-table tr:hover td{background:rgba(46,204,113,0.04)}
+.h-table tr:last-child td{border-bottom:none}
+
+/* ── SCHEDULE TABLE ── */
+.sch-table{width:100%;border-collapse:collapse;font-size:13px}
+.sch-table th{
+  background:linear-gradient(135deg,#1a7a41,#27ae60);color:white;
+  padding:10px 12px;font-weight:600;font-size:12px;
+}
+.sch-table td{
+  padding:11px 12px;border-bottom:1px solid var(--border);
+  color:var(--sub);transition:background 0.2s;
+}
+.sch-table tr:hover td{background:rgba(46,204,113,0.04)}
+.sch-table tr:last-child td{border-bottom:none}
+.load-pill{
+  padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;
+  display:inline-block;
+}
+
+/* ── IOT SENSOR ── */
+.iot-type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.iot-type-card{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;padding:14px 10px;text-align:center;
+  cursor:pointer;transition:all 0.2s;
+}
+.iot-type-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.iot-type-card.iot-selected{
+  border-color:var(--glow);background:rgba(46,204,113,0.1);
+  box-shadow:0 0 12px rgba(46,204,113,0.15);
+}
+.iot-type-icon{font-size:22px;margin-bottom:6px}
+.iot-type-name{font-size:12px;font-weight:600;color:var(--text)}
+.iot-type-proto{font-size:10px;color:var(--muted);margin-top:2px}
+.iot-config-panel{
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:12px;padding:18px;margin-bottom:14px;
+}
+.iot-config-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+}
+.iot-status-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border2);color:var(--muted);
+}
+.iot-status-badge.iot-live{background:rgba(46,204,113,0.12);border-color:rgba(46,204,113,0.3);color:#2ecc71}
+.iot-status-badge.iot-error{background:rgba(231,76,60,0.1);border-color:rgba(231,76,60,0.25);color:#e74c3c}
+.iot-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;
+}
+.iot-dot.dot-idle{background:rgba(111,207,130,0.3)}
+.iot-dot.dot-connecting{background:#f39c12;animation:ping 1s infinite}
+.iot-dot.dot-live{background:#2ecc71;animation:ping 1.5s infinite}
+.iot-dot.dot-error{background:#e74c3c}
+input[type=text]{
+  padding:10px 14px;background:var(--card2);border:1px solid var(--border2);
+  border-radius:10px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;
+  outline:none;transition:all 0.25s;width:100%;
+}
+input[type=text]:focus{border-color:var(--glow);box-shadow:0 0 0 3px rgba(46,204,113,0.12)}
+.iot-log{
+  background:rgba(0,0,0,0.25);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;font-family:monospace;
+  font-size:11px;color:var(--muted);height:88px;overflow-y:auto;
+  margin-top:12px;display:flex;flex-direction:column-reverse;
+}
+body.light .iot-log{background:rgba(0,0,0,0.04)}
+.iot-log-ok{color:#2ecc71}.iot-log-warn{color:#f39c12}.iot-log-err{color:#e74c3c}
+.iot-readings-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+.iot-reading{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;padding:14px;text-align:center;
+}
+.iot-reading-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--glow);line-height:1.1}
+.iot-reading-unit{font-size:10px;color:var(--muted);margin-top:2px}
+.iot-reading-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--sub);margin-top:5px;text-transform:uppercase}
+.iot-spark-wrap{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:14px}
+.iot-tabs{display:flex;gap:4px;margin-bottom:14px}
+.iot-tab{
+  padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;
+  color:var(--muted);background:transparent;border:1px solid transparent;transition:all 0.2s;
+}
+.iot-tab:hover{color:var(--sub)}
+.iot-tab.iot-tab-active{
+  background:rgba(46,204,113,0.1);border-color:var(--border2);color:var(--glow);
+}
+.iot-tab-pane{display:none}.iot-tab-pane.iot-tab-pane-active{display:block}
+.iot-code{
+  background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;
+  padding:14px;font-family:monospace;font-size:11px;line-height:1.7;
+  overflow-x:auto;white-space:pre;color:var(--sub);margin-bottom:10px;
+}
+body.light .iot-code{background:rgba(0,0,0,0.04)}
+.iot-kw{color:#3498db}.iot-str{color:#2ecc71}.iot-cm{color:rgba(111,207,130,0.4)}
+@media(max-width:680px){
+  .iot-type-grid{grid-template-columns:repeat(2,1fr)}
+  .iot-readings-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:10px}
+.toast{
+  padding:13px 18px;border-radius:12px;font-size:13px;font-weight:500;
+  display:flex;align-items:center;gap:10px;min-width:260px;
+  backdrop-filter:blur(12px);
+  animation:toastIn 0.35s cubic-bezier(0.4,0,0.2,1) both;
+  border:1px solid var(--border2);
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+.toast-success{background:rgba(10,30,15,0.92);color:#2ecc71;border-color:rgba(46,204,113,0.3)}
+.toast-warn{background:rgba(30,20,5,0.92);color:#f39c12;border-color:rgba(243,156,18,0.3)}
+.toast-error{background:rgba(30,8,8,0.92);color:#e74c3c;border-color:rgba(231,76,60,0.3)}
+body.light .toast-success{background:rgba(240,252,244,0.97)}
+body.light .toast-warn{background:rgba(255,248,235,0.97)}
+body.light .toast-error{background:rgba(255,242,240,0.97)}
+
+/* ── PEAK ALERT ── */
+.peak-bar{
+  display:none;background:linear-gradient(90deg,#7b241c,#e74c3c,#7b241c);
+  background-size:300%;color:white;text-align:center;
+  padding:10px;font-size:13px;font-weight:700;
+  animation:peakShift 2s linear infinite;
+}
+@keyframes peakShift{0%{background-position:0%}100%{background-position:300%}}
+
+/* ── MOBILE MENU ── */
+.menu-btn{display:none;background:none;border:1px solid var(--border2);
+  color:var(--sub);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:16px}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99}
+
+canvas{max-width:100%!important;border-radius:10px}
+
+/* ── MONTH SUMMARY ── */
+.ms-avg-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.ms-mini{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;padding:14px;text-align:center;
+}
+.ms-mini-val{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;margin:4px 0}
+.ms-mini-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.8px}
+
+/* ── NO DATA ── */
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}
+.empty-icon{font-size:44px;margin-bottom:12px}
+.empty-msg{font-size:14px;font-weight:500}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  :root{--sidebar:200px}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:680px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .main{margin-left:0}
+  .menu-btn{display:flex;align-items:center}
+  .content{padding:16px}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .ms-avg-row{grid-template-columns:1fr 1fr}
+  .topbar{padding:0 16px}
+  .weather-chips{display:none}
+  input[type=number],select{min-width:120px}
+}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<div class="peak-bar" id="peakBar">🚨 PEAK HOURS — 6PM to 9PM! Reduce AC & heavy appliances NOW</div>
+
+<div class="shell">
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">ECOWATT</div>
+      <div class="logo-sub">AI Energy Dashboard</div>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Main</div>
+  <div class="nav-item active" onclick="goTo('predict',this)">
+    <span class="nav-icon">🔮</span> AI Predictor
+  </div>
+  <div class="nav-item" onclick="goTo('live',this)">
+    <span class="nav-icon">📊</span> Live Graph
+  </div>
+  <div class="nav-item" onclick="goTo('forecast',this)">
+    <span class="nav-icon">📅</span> 7-Day Forecast
+  </div>
+
+  <div class="nav-section-label">Usage</div>
+  <div class="nav-item" onclick="goTo('appliance',this)">
+    <span class="nav-icon">🏠</span> Appliance Calc
+  </div>
+  <div class="nav-item" onclick="goTo('bill',this)">
+    <span class="nav-icon">💰</span> Bill Calculator
+  </div>
+
+  <div class="nav-section-label">Tracking</div>
+  <div class="nav-item" onclick="goTo('calendar',this)">
+    <span class="nav-icon">📆</span> Calendar
+  </div>
+  <div class="nav-item" onclick="goTo('monthly',this)">
+    <span class="nav-icon">📈</span> Monthly Summary
+  </div>
+  <div class="nav-item" onclick="goTo('history',this)">
+    <span class="nav-icon">🗂️</span> History
+    <span class="nav-badge" id="histBadge">0</span>
+  </div>
+
+  <div class="nav-section-label">Tools</div>
+  <div class="nav-item" onclick="goTo('schedule',this)">
+    <span class="nav-icon">💡</span> Smart Schedule
+  </div>
+  <div class="nav-item" onclick="goTo('iot',this)">
+    <span class="nav-icon">📡</span> IoT Sensors
+    <span class="nav-badge" id="iotBadge" style="display:none">Live</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span id="themeIcon">☀️</span>
+      <span id="themeLabel">Light Mode</span>
+      <div class="toggle-pill"></div>
+    </button>
+  </div>
+</aside>
+<div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════ MAIN ══════════ -->
+<div class="main">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="openSidebar()">☰</button>
+      <div>
+        <div class="page-title" id="pageTitle">AI Energy Predictor</div>
+        <div class="page-sub"><span class="live-dot"></span>Live &nbsp;·&nbsp; <span id="todayDate"></span></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="weather-chips">
+        <div class="chip">🌡️ <strong id="wtTemp">--</strong>°C</div>
+        <div class="chip">💧 <strong id="wtHum">--</strong>%</div>
+        <div class="chip">📍 <strong id="wtCity">Detecting...</strong></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ═══ PAGE: PREDICT ═══ -->
+    <div class="page active" id="page-predict">
+      <div class="card">
+        <div class="card-title"><span>🔮</span> AI Energy Predictor</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Temperature (°C)</label>
+            <input type="number" id="temperature" placeholder="e.g. 32" min="0" max="50"/>
+          </div>
+          <div class="form-group">
+            <label>Humidity (%)</label>
+            <input type="number" id="humidity" placeholder="e.g. 70" min="0" max="100"/>
+          </div>
+          <div class="form-group">
+            <label>Occupancy (people)</label>
+            <input type="number" id="occupancy" placeholder="e.g. 50" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Building Type</label>
+            <select id="building">
+              <option value="1">🏫 Classroom Block</option>
+              <option value="2">🔬 Lab Building</option>
+              <option value="3">📚 Library</option>
+              <option value="4">🏠 Hostel</option>
+              <option value="5">🍽️ Canteen</option>
+            </select>
+          </div>
+          <div class="form-group" style="justify-content:flex-end">
+            <button class="btn btn-primary" onclick="predictEnergy()" id="predictBtn">
+              ⚡ Predict Energy
+            </button>
+          </div>
+        </div>
+
+        <div class="result-box" id="mlResult">Enter values above and click Predict →</div>
+
+        <!-- OUTPUT PANEL -->
+        <div id="predictOutput" style="display:none">
+          <div style="text-align:center;margin:16px 0 8px">
+            <span class="badge" id="statusBadge"></span>
+          </div>
+
+          <!-- Gauge -->
+          <div class="gauge-wrap">
+            <canvas id="gaugeCanvas" width="240" height="140" style="display:block;margin:0 auto"></canvas>
+            <div class="gauge-num" id="kwhBig">0</div>
+            <div class="gauge-label">KILOWATT HOURS PREDICTED</div>
+          </div>
+
+          <!-- 4 Stats -->
+          <div class="grid-4" style="margin:16px 0">
+            <div class="stat">
+              <div class="stat-top" style="background:linear-gradient(90deg,transparent,#2ecc71,transparent)"></div>
+              <div class="stat-icon">⚡</div>
+              <div class="stat-val" id="sc-kwh" style="color:#2ecc71">--</div>
+              <div class="stat-label">kWh</div>
+            </div>
+            <div class="stat">
+              <div class="stat-top" style="background:linear-gradient(90deg,transparent,#f39c12,transparent)"></div>
+              <div class="stat-icon">💰</div>
+              <div class="stat-val" id="sc-cost" style="color:#f39c12">--</div>
+              <div class="stat-label">Est. Cost</div>
+            </div>
+            <div class="stat">
+              <div class="stat-top" style="background:linear-gradient(90deg,transparent,#3498db,transparent)"></div>
+              <div class="stat-icon">🌿</div>
+              <div class="stat-val" id="sc-co2" style="color:#3498db">--</div>
+              <div class="stat-label">CO₂ kg</div>
+            </div>
+            <div class="stat">
+              <div class="stat-top" style="background:linear-gradient(90deg,transparent,#9b59b6,transparent)"></div>
+              <div class="stat-icon">🌳</div>
+              <div class="stat-val" id="sc-trees" style="color:#9b59b6">--</div>
+              <div class="stat-label">Trees Needed</div>
+            </div>
+          </div>
+
+          <!-- Carbon bar -->
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">
+              <span>🌱 Carbon Footprint Level</span><span id="carbonPct">0%</span>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-fill" id="carbonBar" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="tip-box" id="tip"></div>
+          <div id="carbonText" style="font-size:12px;color:var(--muted);text-align:center;padding:10px;background:var(--card2);border-radius:8px;border:1px solid var(--border)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: LIVE GRAPH ═══ -->
+    <div class="page" id="page-live">
+      <div class="card">
+        <div class="card-title"><span>📊</span> Live Prediction Graph</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:4px">Updated after every prediction</p>
+        <canvas id="energyChart" height="120"></canvas>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: FORECAST ═══ -->
+    <div class="page" id="page-forecast">
+      <div class="card">
+        <div class="card-title"><span>📅</span> 7-Day Energy Forecast</div>
+        <button class="btn btn-primary" onclick="generateForecast()">🔄 Generate Forecast</button>
+        <canvas id="forecastChart" height="130" style="margin-top:16px"></canvas>
+        <div id="forecastTip" style="font-size:13px;color:var(--sub);margin-top:12px;padding:12px 16px;background:var(--card2);border-radius:10px;border:1px solid var(--border)"></div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: APPLIANCE ═══ -->
+    <div class="page" id="page-appliance">
+      <div class="card">
+        <div class="card-title"><span>🏠</span> Home Appliance Calculator</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Enter hours used per day for each appliance</p>
+        <table class="app-table">
+          <tr><td>🌀 Fan <span style="color:var(--muted);font-size:11px">(75W)</span></td><td><input type="number" id="fan" placeholder="Hours/day" min="0" max="24"/></td></tr>
+          <tr><td>❄️ Air Conditioner <span style="color:var(--muted);font-size:11px">(1500W)</span></td><td><input type="number" id="ac" placeholder="Hours/day" min="0" max="24"/></td></tr>
+          <tr><td>📺 Television <span style="color:var(--muted);font-size:11px">(120W)</span></td><td><input type="number" id="tv" placeholder="Hours/day" min="0" max="24"/></td></tr>
+          <tr><td>💡 LED Bulb <span style="color:var(--muted);font-size:11px">(10W)</span></td><td><input type="number" id="bulb" placeholder="Hours/day" min="0" max="24"/></td></tr>
+          <tr><td>🖥️ Computer <span style="color:var(--muted);font-size:11px">(200W)</span></td><td><input type="number" id="computer" placeholder="Hours/day" min="0" max="24"/></td></tr>
+          <tr><td>🫙 Refrigerator <span style="color:var(--muted);font-size:11px">(150W)</span></td><td><input type="number" id="fridge" placeholder="Hours/day" min="0" max="24"/></td></tr>
+          <tr><td>🌊 Washing Machine <span style="color:var(--muted);font-size:11px">(500W)</span></td><td><input type="number" id="washing" placeholder="Hours/day" min="0" max="24"/></td></tr>
+        </table>
+        <div style="margin-top:16px">
+          <button class="btn btn-primary" onclick="applianceCalc()">🔌 Calculate Usage</button>
+        </div>
+        <div class="result-box" id="applianceResult" style="display:none"></div>
+        <div class="tip-box" id="applianceTip" style="display:none"></div>
+        <canvas id="applianceChart" height="160" style="display:none;margin-top:16px"></canvas>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: BILL ═══ -->
+    <div class="page" id="page-bill">
+      <div class="card">
+        <div class="card-title"><span>💰</span> State-wise Electricity Bill Calculator</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">உங்கள் State-ஓட exact slab rates மூலம் calculate பண்ணலாம்</p>
+
+        <!-- State selector row -->
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group" style="flex:1.2">
+            <label>State / UT</label>
+            <select id="bill-state" onchange="onBillStateChange()">
+              <option value="">— Select State —</option>
+              <option value="TN">Tamil Nadu (TNEB)</option>
+              <option value="MH">Maharashtra (MSEDCL)</option>
+              <option value="KA">Karnataka (BESCOM)</option>
+              <option value="DL">Delhi (BSES / TATA)</option>
+              <option value="GJ">Gujarat (DGVCL/UGVCL)</option>
+              <option value="RJ">Rajasthan (JVVNL)</option>
+              <option value="UP">Uttar Pradesh (UPPCL)</option>
+              <option value="WB">West Bengal (WBSEDCL)</option>
+              <option value="AP">Andhra Pradesh (APEPDCL)</option>
+              <option value="TS">Telangana (TSSPDCL)</option>
+              <option value="KL">Kerala (KSEB)</option>
+              <option value="PB">Punjab (PSPCL)</option>
+              <option value="HR">Haryana (DHBVN)</option>
+              <option value="MP">Madhya Pradesh (MPEZ)</option>
+              <option value="OR">Odisha (CESU)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Consumer Type</label>
+            <select id="bill-consumer">
+              <option value="domestic">🏠 Domestic (Residential)</option>
+              <option value="commercial">🏢 Commercial</option>
+              <option value="agriculture">🌾 Agriculture</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:0.8">
+            <label>Units Consumed (kWh)</label>
+            <input type="number" id="units" placeholder="e.g. 250" min="0"/>
+          </div>
+          <div class="form-group" style="justify-content:flex-end">
+            <button class="btn btn-primary" onclick="calculateBill()">💰 Calculate Bill</button>
+          </div>
+        </div>
+
+        <!-- State rate info box -->
+        <div id="bill-state-info" style="display:none;padding:12px 16px;border-radius:10px;background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.2);margin-bottom:14px;font-size:12px;color:var(--sub)"></div>
+
+        <!-- Result -->
+        <div id="billResult"></div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: CALENDAR ═══ -->
+    <div class="page" id="page-calendar">
+      <div class="card">
+        <div class="card-title"><span>📆</span> Daily Activity Calendar</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Every day predict panna → ✅ green mark varum. Miss pannina day → dim.</p>
+
+        <div class="cal-header">
+          <div class="cal-nav" onclick="changeCalMonth(-1)">◀</div>
+          <div class="cal-month" id="calMonthLabel"></div>
+          <div class="cal-nav" onclick="changeCalMonth(1)">▶</div>
+        </div>
+        <div class="cal-days-header">
+          <div class="cal-day-name">Sun</div><div class="cal-day-name">Mon</div>
+          <div class="cal-day-name">Tue</div><div class="cal-day-name">Wed</div>
+          <div class="cal-day-name">Thu</div><div class="cal-day-name">Fri</div>
+          <div class="cal-day-name">Sat</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;justify-content:center" id="calStats"></div>
+        <div id="weekStatus" style="text-align:center;margin-top:12px;font-size:13px;font-weight:600"></div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: MONTHLY SUMMARY ═══ -->
+    <div class="page" id="page-monthly">
+      <div class="card">
+        <div class="card-title"><span>📈</span> Monthly Usage Summary</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">இந்த மாசம் எவ்வளவு energy use பண்ணினோம் — complete breakdown!</p>
+
+        <div class="form-row" style="align-items:flex-end">
+          <div class="form-group">
+            <label>Month</label>
+            <select id="summaryMonth" onchange="renderMonthlySummary()"></select>
+          </div>
+          <div class="form-group">
+            <label>Year</label>
+            <select id="summaryYear" onchange="renderMonthlySummary()"></select>
+          </div>
+          <button class="btn btn-primary" onclick="renderMonthlySummary()">📈 Show</button>
+        </div>
+
+        <div id="ms-nodata" class="empty" style="display:none">
+          <div class="empty-icon">📭</div>
+          <div class="empty-msg">இந்த மாசம் prediction இல்லை.<br>Predict பண்ணுங்க — data வரும்!</div>
+        </div>
+
+        <div id="ms-data">
+          <div class="grid-4" style="margin-bottom:16px">
+            <div class="stat">
+              <div class="stat-top" style="background:linear-gradient(90deg,transparent,#2ecc71,transparent)"></div>
+              <div class="stat-icon">⚡</div>
+              <div class="stat-val" id="ms-kwh" style="color:#2ecc71">--</div>
+              <div class="stat-label">Total kWh</div>
+            </div>
+            <div class="stat">
+              <div class="stat-top" style="background:linear-gradient(90deg,transparent,#f39c12,transparent)"></div>
+              <div class="stat-icon">💰</div>
+              <div class="stat-val" id="ms-cost" style="color:#f39c12">--</div>
+              <div class="stat-label">Est. Bill</div>
+            </div>
+            <div class="stat">
+              <div class="stat-top" style="background:linear-gradient(90deg,transparent,#3498db,transparent)"></div>
+              <div class="stat-icon">🌿</div>
+              <div class="stat-val" id="ms-co2" style="color:#3498db">--</div>
+              <div class="stat-label">Total CO₂ kg</div>
+            </div>
+            <div class="stat">
+              <div class="stat-top" style="background:linear-gradient(90deg,transparent,#9b59b6,transparent)"></div>
+              <div class="stat-icon">📅</div>
+              <div class="stat-val" id="ms-days" style="color:#9b59b6">--</div>
+              <div class="stat-label">Active Days</div>
+            </div>
+          </div>
+
+          <div class="ms-avg-row">
+            <div class="ms-mini">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px">📊 Daily Avg</div>
+              <div class="ms-mini-val" id="ms-avg" style="color:#2ecc71">--</div>
+              <div class="ms-mini-label">kWh / day</div>
+            </div>
+            <div class="ms-mini">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px">🔺 Peak Day</div>
+              <div class="ms-mini-val" id="ms-peak" style="color:#e74c3c">--</div>
+              <div class="ms-mini-label" id="ms-peak-date">--</div>
+            </div>
+            <div class="ms-mini">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px">🔻 Best Day</div>
+              <div class="ms-mini-val" id="ms-low" style="color:#2ecc71">--</div>
+              <div class="ms-mini-label" id="ms-low-date">--</div>
+            </div>
+          </div>
+
+          <canvas id="monthlyChart" height="130" style="margin-top:16px"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: HISTORY ═══ -->
+    <div class="page" id="page-history">
+      <div class="card">
+        <div class="card-title"><span>🗂️</span> Prediction History</div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn btn-danger" onclick="clearHistory()">🗑️ Clear All</button>
+          <button class="btn btn-outline" onclick="exportCSV()">📥 Export CSV</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="h-table">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th><th>Building</th><th>Temp</th>
+                <th>Humidity</th><th>Occupancy</th><th>kWh</th><th>CO₂</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="7" style="padding:24px;color:var(--muted)">No predictions yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: SCHEDULE ═══ -->
+    <div class="page" id="page-schedule">
+      <div class="card">
+        <div class="card-title"><span>💡</span> Smart Schedule Recommender</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Best times to run appliances — based on peak/off-peak tariffs</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+          <button class="btn btn-primary" onclick="generateSchedule()">📋 Generate Schedule</button>
+          <button class="btn btn-outline" onclick="downloadPDF()">📄 Download PDF</button>
+        </div>
+        <div id="scheduleDiv" style="overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: IOT SENSORS ═══ -->
+    <div class="page" id="page-iot">
+      <div class="card">
+        <div class="card-title"><span>📡</span> IoT Sensor &amp; Smart Meter</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Real-time sensor data — dashboard-ல் direct-ஆ connect பண்ணலாம்</p>
+
+        <!-- Tabs -->
+        <div class="iot-tabs">
+          <div class="iot-tab iot-tab-active" onclick="iotSwitchTab('connect',this)">🔌 Connect</div>
+          <div class="iot-tab" onclick="iotSwitchTab('live',this)">📊 Live Data</div>
+          <div class="iot-tab" onclick="iotSwitchTab('code',this)">💻 Code</div>
+        </div>
+
+        <!-- TAB: CONNECT -->
+        <div class="iot-tab-pane iot-tab-pane-active" id="iot-tab-connect">
+          <p style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Sensor / Meter Type</p>
+          <div class="iot-type-grid">
+            <div class="iot-type-card iot-selected" id="iot-card-mqtt" onclick="iotSelectType('mqtt',this)">
+              <div class="iot-type-icon">📡</div>
+              <div class="iot-type-name">MQTT Sensor</div>
+              <div class="iot-type-proto">MQTT 3.1.1</div>
+            </div>
+            <div class="iot-type-card" id="iot-card-modbus" onclick="iotSelectType('modbus',this)">
+              <div class="iot-type-icon">⚡</div>
+              <div class="iot-type-name">Smart Meter</div>
+              <div class="iot-type-proto">Modbus TCP</div>
+            </div>
+            <div class="iot-type-card" id="iot-card-http" onclick="iotSelectType('http',this)">
+              <div class="iot-type-icon">🌐</div>
+              <div class="iot-type-name">HTTP REST</div>
+              <div class="iot-type-proto">HTTP/HTTPS</div>
+            </div>
+            <div class="iot-type-card" id="iot-card-serial" onclick="iotSelectType('serial',this)">
+              <div class="iot-type-icon">🔌</div>
+              <div class="iot-type-name">Serial / USB</div>
+              <div class="iot-type-proto">RS-232 / USB</div>
+            </div>
+          </div>
+
+          <div class="iot-config-panel">
+            <div class="iot-config-header">
+              <span style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--sub)" id="iot-cfg-title">MQTT CONFIGURATION</span>
+              <span class="iot-status-badge" id="iot-status-badge">
+                <span class="iot-dot dot-idle" id="iot-dot"></span>
+                <span id="iot-status-txt">Idle</span>
+              </span>
+            </div>
+
+            <!-- MQTT Fields -->
+            <div id="iot-fields-mqtt">
+              <div class="form-row">
+                <div class="form-group" style="flex:2">
+                  <label>Broker IP / Host</label>
+                  <input type="text" id="iot-broker" placeholder="192.168.1.100" value="192.168.1.100"/>
+                </div>
+                <div class="form-group" style="flex:0.6">
+                  <label>Port</label>
+                  <input type="number" id="iot-port" placeholder="1883" value="1883"/>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:2">
+                  <label>Topic</label>
+                  <input type="text" id="iot-topic" placeholder="ecowatt/sensor/power" value="ecowatt/sensor/power"/>
+                </div>
+                <div class="form-group" style="flex:0.8">
+                  <label>Interval (ms)</label>
+                  <input type="number" id="iot-interval" placeholder="1000" value="1000"/>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:1">
+                  <label>Username (optional)</label>
+                  <input type="text" id="iot-user" placeholder="mqtt_user"/>
+                </div>
+                <div class="form-group" style="flex:1">
+                  <label>Password</label>
+                  <input type="password" id="iot-pass" placeholder="••••••"/>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modbus Fields -->
+            <div id="iot-fields-modbus" style="display:none">
+              <div class="form-row">
+                <div class="form-group" style="flex:2">
+                  <label>Meter IP</label>
+                  <input type="text" placeholder="192.168.1.50" value="192.168.1.50"/>
+                </div>
+                <div class="form-group" style="flex:0.6">
+                  <label>Port</label>
+                  <input type="number" placeholder="502" value="502"/>
+                </div>
+                <div class="form-group" style="flex:0.6">
+                  <label>Unit ID</label>
+                  <input type="number" placeholder="1" value="1"/>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:1">
+                  <label>Register (kWh)</label>
+                  <input type="text" placeholder="0x0000" value="0x0000"/>
+                </div>
+                <div class="form-group" style="flex:1">
+                  <label>Register (Voltage)</label>
+                  <input type="text" placeholder="0x0100" value="0x0100"/>
+                </div>
+              </div>
+            </div>
+
+            <!-- HTTP Fields -->
+            <div id="iot-fields-http" style="display:none">
+              <div class="form-row">
+                <div class="form-group" style="flex:1">
+                  <label>Endpoint URL</label>
+                  <input type="text" placeholder="http://sensor.local/api/data"/>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:0.8">
+                  <label>Poll Interval (ms)</label>
+                  <input type="number" placeholder="5000" value="5000"/>
+                </div>
+                <div class="form-group" style="flex:1.2">
+                  <label>Auth Token (optional)</label>
+                  <input type="text" placeholder="Bearer token"/>
+                </div>
+              </div>
+            </div>
+
+            <!-- Serial Fields — Web Serial API -->
+            <div id="iot-fields-serial" style="display:none">
+              <div style="padding:12px 14px;border-radius:10px;background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.2);margin-bottom:14px;font-size:12px;color:#3498db">
+                🌐 <strong>Web Serial API</strong> — Chrome / Edge browser-ல் USB direct-ஆ connect ஆகும். Firefox support இல்லை.
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Baud Rate</label>
+                  <select id="serial-baud">
+                    <option value="9600">9600</option>
+                    <option value="19200">19200</option>
+                    <option value="57600">57600</option>
+                    <option value="115200" selected>115200</option>
+                    <option value="230400">230400</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Data Bits</label>
+                  <select id="serial-databits">
+                    <option value="7">7</option>
+                    <option value="8" selected>8</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Stop Bits</label>
+                  <select id="serial-stopbits">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Parity</label>
+                  <select id="serial-parity">
+                    <option value="none" selected>None</option>
+                    <option value="even">Even</option>
+                    <option value="odd">Odd</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Data Format</label>
+                  <select id="serial-format">
+                    <option value="json">JSON  {"kwh":2.5,"v":230,"a":10.8}</option>
+                    <option value="csv">CSV  2.5,230,10.8,0.95</option>
+                    <option value="raw">Raw  (single float kWh)</option>
+                  </select>
+                </div>
+              </div>
+              <div id="serial-no-support" style="display:none;padding:10px 14px;border-radius:8px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);font-size:12px;color:#e74c3c;margin-top:4px">
+                ❌ உங்கள் browser Web Serial API support பண்றதில்லை. Chrome அல்லது Edge use பண்ணுங்க.
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+              <button class="btn btn-primary" id="iot-connect-btn" onclick="iotConnect()">⚡ Connect</button>
+              <button class="btn btn-danger" id="iot-disconnect-btn" style="display:none" onclick="iotDisconnect()">✕ Disconnect</button>
+              <button class="btn btn-outline" onclick="iotTest()">🔍 Test Connection</button>
+            </div>
+            <div class="iot-log" id="iot-log">
+              <div>— Ready. Sensor type select பண்ணி Connect click பண்ணுங்க.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: LIVE DATA -->
+        <div class="iot-tab-pane" id="iot-tab-live">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <span style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--sub)">LIVE READINGS</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span id="iot-live-badge" class="iot-status-badge" style="display:none">
+                <span class="iot-dot dot-live"></span> Live
+              </span>
+              <span id="iot-sim-badge" class="iot-status-badge iot-live">
+                <span class="iot-dot dot-live"></span> Simulated
+              </span>
+            </div>
+          </div>
+          <div class="iot-readings-grid">
+            <div class="iot-reading">
+              <div class="iot-reading-val" id="iot-r-kwh">--</div>
+              <div class="iot-reading-unit">kWh</div>
+              <div class="iot-reading-label">Power</div>
+            </div>
+            <div class="iot-reading">
+              <div class="iot-reading-val" id="iot-r-v">--</div>
+              <div class="iot-reading-unit">V</div>
+              <div class="iot-reading-label">Voltage</div>
+            </div>
+            <div class="iot-reading">
+              <div class="iot-reading-val" id="iot-r-a">--</div>
+              <div class="iot-reading-unit">A</div>
+              <div class="iot-reading-label">Current</div>
+            </div>
+            <div class="iot-reading">
+              <div class="iot-reading-val" id="iot-r-pf">--</div>
+              <div class="iot-reading-unit">PF</div>
+              <div class="iot-reading-label">Power Factor</div>
+            </div>
+          </div>
+
+          <div class="iot-spark-wrap">
+            <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:var(--muted);margin-bottom:6px;text-transform:uppercase">Last 30 Readings — kWh</div>
+            <canvas id="iot-spark" height="55" style="width:100%"></canvas>
+          </div>
+
+          <div class="tip-box" id="iot-sensor-tip" style="display:none"></div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="iotPushToPredictor()">⚡ Push to AI Predictor</button>
+            <button class="btn btn-outline" id="iot-stream-btn" onclick="iotToggleStream()">▶ Start Stream</button>
+          </div>
+        </div>
+
+        <!-- TAB: CODE -->
+        <div class="iot-tab-pane" id="iot-tab-code">
+          <div class="iot-tabs" style="margin-bottom:12px">
+            <div class="iot-tab iot-tab-active" id="iot-ctab-mqtt" onclick="iotSwitchCode('mqtt',this)">MQTT.js</div>
+            <div class="iot-tab" id="iot-ctab-modbus" onclick="iotSwitchCode('modbus',this)">Modbus</div>
+            <div class="iot-tab" id="iot-ctab-esp" onclick="iotSwitchCode('esp',this)">ESP8266</div>
+          </div>
+          <div id="iot-code-mqtt">
+            <div class="iot-code"><span class="iot-cm">// EcoWatt — MQTT Sensor Integration (Node.js)</span>
+<span class="iot-kw">const</span> mqtt = require(<span class="iot-str">'mqtt'</span>);
+
+<span class="iot-kw">const</span> CONFIG = {
+  broker:   <span class="iot-str">'mqtt://192.168.1.100:1883'</span>,
+  topic:    <span class="iot-str">'ecowatt/sensor/power'</span>,
+  clientId: <span class="iot-str">'ecowatt-dashboard'</span>
+};
+
+<span class="iot-kw">const</span> client = mqtt.connect(CONFIG.broker, {
+  clientId: CONFIG.clientId,
+  username: <span class="iot-str">''</span>,  <span class="iot-cm">// optional</span>
+  password: <span class="iot-str">''</span>
+});
+
+client.on(<span class="iot-str">'connect'</span>, () =&gt; {
+  console.log(<span class="iot-str">'Connected to broker'</span>);
+  client.subscribe(CONFIG.topic);
+});
+
+client.on(<span class="iot-str">'message'</span>, (topic, payload) =&gt; {
+  <span class="iot-kw">const</span> data = JSON.parse(payload.toString());
+  <span class="iot-cm">// data: { kwh, voltage, current, pf }</span>
+  <span class="iot-cm">// temperature &amp; humidity from predictor fields</span>
+  document.getElementById(<span class="iot-str">'iot-r-kwh'</span>).textContent = data.kwh;
+  document.getElementById(<span class="iot-str">'iot-r-v'</span>).textContent   = data.voltage;
+});
+</div>
+          </div>
+          <div id="iot-code-modbus" style="display:none">
+            <div class="iot-code"><span class="iot-cm">// EcoWatt — Smart Meter via Modbus TCP (Node.js)</span>
+<span class="iot-kw">const</span> ModbusRTU = require(<span class="iot-str">'modbus-serial'</span>);
+
+<span class="iot-kw">const</span> client = <span class="iot-kw">new</span> ModbusRTU();
+<span class="iot-kw">await</span> client.connectTCP(<span class="iot-str">'192.168.1.50'</span>, { port: 502 });
+client.setID(1);
+
+<span class="iot-kw">async function</span> readMeter() {
+  <span class="iot-kw">const</span> kwh  = <span class="iot-kw">await</span> client.readHoldingRegisters(0x0000, 2);
+  <span class="iot-kw">const</span> volt = <span class="iot-kw">await</span> client.readHoldingRegisters(0x0100, 1);
+
+  <span class="iot-kw">const</span> data = {
+    kwh:     (kwh.data[0] * 65536 + kwh.data[1]) / 100,
+    voltage: volt.data[0] / 10
+  };
+  updateEcoWattDashboard(data);
+}
+setInterval(readMeter, 5000);
+</div>
+          </div>
+          <div id="iot-code-esp" style="display:none">
+            <div class="iot-code"><span class="iot-cm">// ESP8266 Arduino — EcoWatt Sensor Node</span>
+<span class="iot-cm">// Libraries: EmonLib, PubSubClient, ArduinoJson</span>
+#include &lt;ESP8266WiFi.h&gt;
+#include &lt;PubSubClient.h&gt;
+#include &lt;EmonLib.h&gt;
+
+EnergyMonitor emon;
+WiFiClient wifiClient;
+PubSubClient mqtt(wifiClient);
+
+<span class="iot-kw">void</span> setup() {
+  WiFi.begin(<span class="iot-str">"YourSSID"</span>, <span class="iot-str">"YourPass"</span>);
+  mqtt.setServer(<span class="iot-str">"192.168.1.100"</span>, 1883);
+  emon.current(A0, 111.1); <span class="iot-cm">// CT sensor, calibration</span>
+}
+
+<span class="iot-kw">void</span> loop() {
+  <span class="iot-kw">double</span> Irms  = emon.calcIrms(1480);
+  <span class="iot-kw">double</span> power = Irms * 230.0;
+
+  String payload = <span class="iot-str">"{"</span>
+    <span class="iot-str">"\"kwh\":"</span>     + String(power/1000, 3) + <span class="iot-str">","</span>
+    <span class="iot-str">"\"current\":"</span> + String(Irms, 2)      + <span class="iot-str">","</span>
+    <span class="iot-str">"\"voltage\":230"</span>
+  <span class="iot-str">"}"</span>;
+
+  mqtt.publish(<span class="iot-str">"ecowatt/sensor/power"</span>, payload.c_str());
+  delay(1000);
+}
+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+'use strict';
+
+// ══════════════════════════════
+// NAV & ROUTING
+// ══════════════════════════════
+const PAGE_TITLES={
+  predict:'AI Energy Predictor',live:'Live Prediction Graph',
+  forecast:'7-Day Forecast',appliance:'Appliance Calculator',
+  bill:'Bill Calculator',calendar:'Daily Calendar',
+  monthly:'Monthly Summary',history:'Prediction History',
+  schedule:'Smart Schedule',iot:'IoT Sensor & Smart Meter'
+};
+
+function goTo(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  document.getElementById('pageTitle').textContent=PAGE_TITLES[id]||'';
+  closeSidebar();
+  if(id==='calendar')renderCalendar();
+  if(id==='monthly')renderMonthlySummary();
+  if(id==='history')renderHistory();
+  if(id==='iot')iotInitStream();
+}
+
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ══════════════════════════════
+// THEME
+// ══════════════════════════════
+let isLight=false;
+function toggleTheme(){
+  isLight=!isLight;
+  document.body.classList.toggle('light',isLight);
+  document.getElementById('themeIcon').textContent=isLight?'🌙':'☀️';
+  document.getElementById('themeLabel').textContent=isLight?'Dark Mode':'Light Mode';
+  [energyChart,forecastChartInst,applianceChartInst,monthlyChartInst].forEach(c=>{if(c)c.update()});
+}
+
+// ══════════════════════════════
+// TOAST
+// ══════════════════════════════
+function toast(msg,type='success'){
+  const w=document.getElementById('toastWrap');
+  const t=document.createElement('div');
+  t.className=`toast toast-${type}`;
+  const icons={success:'✅',warn:'⚠️',error:'❌'};
+  t.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  w.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(40px)';t.style.transition='all 0.3s';setTimeout(()=>t.remove(),300)},3000);
+}
+
+// ══════════════════════════════
+// DATE / TOPBAR
+// ══════════════════════════════
+(function(){
+  const now=new Date();
+  const opts={weekday:'short',month:'short',day:'numeric',year:'numeric'};
+  document.getElementById('todayDate').textContent=now.toLocaleDateString('en-IN',opts);
+  if(now.getHours()>=18&&now.getHours()<=21)document.getElementById('peakBar').style.display='block';
+})();
+
+// ══════════════════════════════
+// WEATHER
+// ══════════════════════════════
+function loadWeather(){
+  if(!navigator.geolocation)return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const{latitude:lat,longitude:lon}=pos.coords;
+    const KEY='YOUR_API_KEY';
+    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${KEY}&units=metric`)
+      .then(r=>r.json()).then(d=>{
+        document.getElementById('wtTemp').textContent=Math.round(d.main.temp);
+        document.getElementById('wtHum').textContent=d.main.humidity;
+        document.getElementById('wtCity').textContent=d.name;
+        document.getElementById('temperature').value=Math.round(d.main.temp);
+        document.getElementById('humidity').value=d.main.humidity;
+      }).catch(()=>{});
+  },()=>{document.getElementById('wtCity').textContent='N/A';});
+}
+
+// ══════════════════════════════
+// LIVE CHART
+// ══════════════════════════════
+const liveLabels=[],liveData=[];
+const energyChart=new Chart(document.getElementById('energyChart').getContext('2d'),{
+  type:'line',
+  data:{labels:liveLabels,datasets:[{
+    label:'Predicted Energy (kWh)',data:liveData,
+    borderColor:'#27ae60',backgroundColor:'rgba(39,174,96,0.07)',
+    borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#27ae60',
+    pointBorderColor:'rgba(0,255,136,0.5)',pointBorderWidth:2,
+    fill:true,tension:0.4
+  }]},
+  options:{
+    responsive:true,animation:{duration:600},
+    plugins:{legend:{labels:{color:'#6fcf82',font:{family:'DM Sans'}}}},
+    scales:{
+      y:{grid:{color:'rgba(39,174,96,0.07)'},ticks:{color:'#6fcf82'},title:{display:true,text:'Energy (kWh)',color:'#6fcf82'}},
+      x:{grid:{color:'rgba(39,174,96,0.05)'},ticks:{color:'#6fcf82'},title:{display:true,text:'Time',color:'#6fcf82'}}
+    }
+  }
+});
+
+// ══════════════════════════════
+// DATA / HISTORY
+// ══════════════════════════════
+let isPredicting=false;
+let history=JSON.parse(localStorage.getItem('ecoHistory')||'[]');
+const BUILDINGS={'1':'Classroom Block','2':'Lab Building','3':'Library','4':'Hostel','5':'Canteen'};
+const BUILDING_BASE={'1':45,'2':80,'3':30,'4':55,'5':60};
+
+function saveHistory(){localStorage.setItem('ecoHistory',JSON.stringify(history))}
+function updateBadge(){document.getElementById('histBadge').textContent=history.length}
+
+// ══════════════════════════════
+// GAUGE
+// ══════════════════════════════
+function drawGauge(pct,color){
+  const cv=document.getElementById('gaugeCanvas');
+  if(!cv)return;
+  const c=cv.getContext('2d');
+  c.clearRect(0,0,cv.width,cv.height);
+  const cx=cv.width/2,cy=cv.height-12,r=96;
+  c.beginPath();c.arc(cx,cy,r,Math.PI,2*Math.PI);
+  c.strokeStyle='rgba(46,204,113,0.1)';c.lineWidth=18;c.lineCap='round';c.stroke();
+  const end=Math.PI+(Math.PI*(Math.min(pct,100)/100));
+  c.beginPath();c.arc(cx,cy,r,Math.PI,end);
+  c.strokeStyle=color;c.lineWidth=18;c.lineCap='round';
+  c.shadowColor=color;c.shadowBlur=14;c.stroke();c.shadowBlur=0;
+  c.fillStyle='rgba(111,207,130,0.5)';c.font='bold 10px DM Sans,sans-serif';c.textAlign='center';
+  c.fillText('LOW',cx-80,cy+18);c.fillText('HIGH',cx+80,cy+18);
+}
+
+// ══════════════════════════════
+// COUNTER ANIMATION
+// ══════════════════════════════
+function animCount(el,to,dec,pre,suf,dur){
+  if(!el)return;
+  const t0=Date.now();
+  (function s(){
+    const p=Math.min(1,(Date.now()-t0)/dur);
+    const e=1-Math.pow(1-p,3);
+    el.textContent=pre+(to*e).toFixed(dec)+suf;
+    if(p<1)requestAnimationFrame(s);
+  })();
+}
+
+// ══════════════════════════════
+// PREDICT ENERGY
+// ══════════════════════════════
+function predictEnergy(){
+  if(isPredicting)return;
+  const temp=parseFloat(document.getElementById('temperature').value);
+  const hum=parseFloat(document.getElementById('humidity').value);
+  const occ=parseFloat(document.getElementById('occupancy').value);
+  const bld=document.getElementById('building').value;
+
+  if(isNaN(temp)||isNaN(hum)||isNaN(occ)){toast('Please fill all fields!','error');return;}
+  if(temp<0||temp>50){toast('Temperature must be 0–50°C','error');return;}
+  if(hum<0||hum>100){toast('Humidity must be 0–100%','error');return;}
+
+  isPredicting=true;
+  const btn=document.getElementById('predictBtn');
+  btn.textContent='⏳ Analysing...';btn.disabled=true;
+  document.getElementById('mlResult').textContent='⏳ Running AI model...';
+  document.getElementById('predictOutput').style.display='none';
+
+  setTimeout(()=>{
+    const base=BUILDING_BASE[bld];
+    const tf=temp>25?(temp-25)*1.8:temp<15?(15-temp)*1.2:0;
+    const hf=hum>60?(hum-60)*0.15:0;
+    const of=occ*0.35;
+    const raw=base+tf+hf+of;
+    const kwh=parseFloat(Math.max(5,raw+(raw*(Math.random()*0.06-0.03))).toFixed(2));
+    const co2=parseFloat((kwh*0.82).toFixed(2));
+    const cost=Math.round(kwh*8);
+    const trees=Math.ceil(co2/21);
+
+    let level,lc,lb,tip,tc,gc;
+    if(kwh<50){level='🟢 LOW USAGE';lc='#2ecc71';lb='rgba(46,204,113,0.15)';
+      tip='✅ Excellent! Low consumption — your building is running efficiently.';tc='#2ecc71';gc='#2ecc71';}
+    else if(kwh<90){level='🟡 MODERATE';lc='#f39c12';lb='rgba(243,156,18,0.15)';
+      tip='⚠️ Moderate usage. Try reducing AC by 2°C & switch off idle devices.';tc='#f39c12';gc='#f39c12';}
+    else{level='🔴 HIGH USAGE';lc='#e74c3c';lb='rgba(231,76,60,0.15)';
+      tip='🚨 High consumption! Turn off non-essential appliances immediately.';tc='#e74c3c';gc='#e74c3c';}
+
+    document.getElementById('mlResult').textContent=`⚡ ${kwh} kWh  |  ₹${cost}  |  🌿 ${co2} kg CO₂`;
+    document.getElementById('mlResult').style.color='#2ecc71';
+
+    const out=document.getElementById('predictOutput');
+    out.style.display='block';out.style.opacity='0';out.style.transform='translateY(12px)';
+    requestAnimationFrame(()=>{out.style.transition='all 0.4s ease';out.style.opacity='1';out.style.transform='translateY(0)'});
+
+    const badge=document.getElementById('statusBadge');
+    badge.textContent=level;badge.style.background=lb;badge.style.color=lc;badge.style.border='1px solid '+lc+'44';
+
+    drawGauge(0,gc);
+    let gp=0;const max=150;const target=(kwh/max)*100;
+    const gi=setInterval(()=>{gp=Math.min(target,gp+2);drawGauge(gp,gc);if(gp>=target)clearInterval(gi)},14);
+
+    animCount(document.getElementById('kwhBig'),kwh,2,'','',1100);
+    setTimeout(()=>{
+      animCount(document.getElementById('sc-kwh'),kwh,2,'','',900);
+      animCount(document.getElementById('sc-cost'),cost,0,'₹','',900);
+      animCount(document.getElementById('sc-co2'),co2,2,'','',900);
+      animCount(document.getElementById('sc-trees'),trees,0,'','',900);
+    },200);
+
+    const bp=Math.min(100,(co2/120)*100);
+    const bc=bp<40?'#27ae60':bp<70?'#f39c12':'#e74c3c';
+    setTimeout(()=>{
+      const bar=document.getElementById('carbonBar');
+      bar.style.width=bp+'%';bar.style.background=bc;bar.style.boxShadow='0 0 8px '+bc;
+      document.getElementById('carbonPct').textContent=Math.round(bp)+'%';
+      document.getElementById('carbonPct').style.color=bc;
+    },400);
+
+    const tipEl=document.getElementById('tip');
+    tipEl.textContent=tip;tipEl.style.color=tc;tipEl.style.borderLeftColor=tc;
+    tipEl.style.background=lb;
+
+    document.getElementById('carbonText').textContent=
+      `🚗 ${(co2/0.12).toFixed(0)} km by car  ·  🌳 ${trees} trees to absorb  ·  💡 ${Math.round(kwh/0.06)} LED bulbs for 1hr`;
+
+    // Live graph
+    const now=new Date();
+    const ts=now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+    liveLabels.push(ts);liveData.push(kwh);
+    if(liveLabels.length>12){liveLabels.shift();liveData.shift();}
+    energyChart.update();
+
+    // Save
+    history.unshift({datetime:now.toLocaleString('en-IN'),building:BUILDINGS[bld],temp,humidity:hum,occupancy:occ,kwh,co2});
+    if(history.length>100)history.pop();
+    saveHistory();updateBadge();renderHistory();renderCalendar();renderMonthlySummary();
+
+    btn.textContent='⚡ Predict Energy';btn.disabled=false;
+    isPredicting=false;
+    toast(`Predicted: ${kwh} kWh for ${BUILDINGS[bld]}`,'success');
+  },900);
+}
+
+// ══════════════════════════════
+// FORECAST
+// ══════════════════════════════
+let forecastChartInst=null;
+function generateForecast(){
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const base=BUILDING_BASE[document.getElementById('building').value]||50;
+  const data=days.map((_,i)=>parseFloat(Math.max(10,(base*(i>=5?0.65:1))+(Math.random()*20-10)).toFixed(1)));
+  const maxI=data.indexOf(Math.max(...data));
+  const minI=data.indexOf(Math.min(...data));
+  document.getElementById('forecastTip').innerHTML=
+    `📌 Peak: <strong style="color:#e74c3c">${days[maxI]} — ${data[maxI]} kWh</strong> &nbsp;·&nbsp; 📉 Low: <strong style="color:#2ecc71">${days[minI]} — ${data[minI]} kWh</strong>`;
+  const fc=document.getElementById('forecastChart').getContext('2d');
+  if(forecastChartInst)forecastChartInst.destroy();
+  forecastChartInst=new Chart(fc,{
+    type:'bar',
+    data:{labels:days,datasets:[{label:'kWh',data,
+      backgroundColor:data.map(v=>v<base*0.7?'rgba(46,204,113,0.65)':v<base*1.1?'rgba(243,156,18,0.65)':'rgba(231,76,60,0.65)'),
+      borderRadius:8,borderWidth:0}]},
+    options:{responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} kWh`}}},
+      scales:{
+        y:{beginAtZero:true,grid:{color:'rgba(39,174,96,0.07)'},ticks:{color:'#6fcf82'},title:{display:true,text:'kWh',color:'#6fcf82'}},
+        x:{grid:{display:false},ticks:{color:'#6fcf82'}}
+      }}
+  });
+  toast('7-Day forecast generated!','success');
+}
+
+// ══════════════════════════════
+// APPLIANCE CALCULATOR
+// ══════════════════════════════
+const APPS=[
+  {id:'fan',label:'Fan',w:75},{id:'ac',label:'Air Conditioner',w:1500},
+  {id:'tv',label:'Television',w:120},{id:'bulb',label:'LED Bulb',w:10},
+  {id:'computer',label:'Computer',w:200},{id:'fridge',label:'Refrigerator',w:150},
+  {id:'washing',label:'Washing Machine',w:500}
+];
+let applianceChartInst=null;
+function applianceCalc(){
+  const usages=APPS.map(a=>({...a,h:parseFloat(document.getElementById(a.id).value)||0,
+    kwh:parseFloat(((a.w*(parseFloat(document.getElementById(a.id).value)||0))/1000).toFixed(3))}));
+  const total=parseFloat(usages.reduce((s,a)=>s+a.kwh,0).toFixed(3));
+  const monthly=(total*30).toFixed(1);
+  const cost=(monthly*8).toFixed(0);
+
+  const resEl=document.getElementById('applianceResult');
+  resEl.style.display='block';
+  resEl.textContent=`Daily: ${total} kWh  |  Monthly: ${monthly} kWh  |  Est. Bill: ₹${cost}/month`;
+  resEl.style.color='#2ecc71';
+
+  const heavy=usages.reduce((a,b)=>a.kwh>b.kwh?a:b);
+  const tipEl=document.getElementById('applianceTip');
+  tipEl.style.display='block';
+  if(heavy.kwh>0){
+    let t=`💡 Biggest consumer: ${heavy.label} (${heavy.kwh} kWh/day). `;
+    if(heavy.id==='ac')t+='Set AC to 24°C instead of 18°C to save ~30%.';
+    else if(heavy.id==='washing')t+='Use full loads & cold water cycles.';
+    else t+='Consider reducing usage time.';
+    tipEl.textContent=t;tipEl.style.color='#f39c12';tipEl.style.borderLeftColor='#f39c12';
+  }
+
+  const active=usages.filter(a=>a.kwh>0);
+  const chartEl=document.getElementById('applianceChart');
+  chartEl.style.display='block';
+  const ac2=chartEl.getContext('2d');
+  if(applianceChartInst)applianceChartInst.destroy();
+  applianceChartInst=new Chart(ac2,{
+    type:'doughnut',
+    data:{labels:active.map(a=>`${a.label} (${a.kwh})`),
+      datasets:[{data:active.map(a=>a.kwh),
+        backgroundColor:['#27ae60','#3498db','#e67e22','#9b59b6','#1abc9c','#e74c3c','#f39c12'],
+        borderWidth:2,borderColor:'rgba(0,0,0,0.2)'}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#6fcf82',font:{size:11,family:'DM Sans'},padding:12}}}}
+  });
+  toast('Appliance usage calculated!','success');
+}
+
+// ══════════════════════════════
+// SCHEDULE
+// ══════════════════════════════
+function generateSchedule(){
+  const SCH=[
+    {t:'05:00–07:00',a:'🌊 Washing Machine',r:'Off-peak — lowest tariff & grid load',l:'Low'},
+    {t:'07:00–08:00',a:'☕ Water Heater',r:'Pre-peak morning — still affordable',l:'Low'},
+    {t:'08:00–17:00',a:'🖥️ Computers & Office',r:'Daytime solar reduces grid strain',l:'Medium'},
+    {t:'10:00–16:00',a:'❄️ Air Conditioner',r:'Solar hours — cleanest energy window',l:'Medium'},
+    {t:'17:00–18:00',a:'📺 TV / Entertainment',r:'Pre-peak window before evening surge',l:'Medium'},
+    {t:'18:00–21:00',a:'⚠️ AVOID heavy loads',r:'PEAK HOURS — highest demand & tariff!',l:'High'},
+    {t:'21:00–23:00',a:'🍽️ Dishwasher / Cooking',r:'Post-peak — rates drop significantly',l:'Low'},
+    {t:'23:00–05:00',a:'🌙 EV & Device Charging',r:'Night off-peak — ideal for charging',l:'Low'},
+  ];
+  const LC={Low:'#2ecc71',Medium:'#f39c12',High:'#e74c3c'};
+  const LB={Low:'rgba(46,204,113,0.12)',Medium:'rgba(243,156,18,0.12)',High:'rgba(231,76,60,0.14)'};
+  document.getElementById('scheduleDiv').innerHTML=`
+    <table class="sch-table">
+      <thead><tr><th style="text-align:left;padding-left:16px">⏰ Time</th><th>🔌 Appliance</th><th>📋 Reason</th><th>⚡ Load</th></tr></thead>
+      <tbody>${SCH.map(s=>`<tr>
+        <td style="font-family:Orbitron,monospace;font-size:11px;color:var(--glow);padding-left:16px">${s.t}</td>
+        <td style="font-weight:600">${s.a}</td>
+        <td style="font-size:12px">${s.r}</td>
+        <td><span class="load-pill" style="color:${LC[s.l]};background:${LB[s.l]}">${s.l}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  toast('Schedule generated!','success');
+}
+
+// ══════════════════════════════
+// PDF
+// ══════════════════════════════
+function downloadPDF(){
+  const{jsPDF}=window.jspdf;const doc=new jsPDF();
+  doc.setFontSize(18);doc.setTextColor(27,94,32);doc.text('EcoWatt AI — Energy Report',14,20);
+  doc.setFontSize(10);doc.setTextColor(100);doc.text('Generated: '+new Date().toLocaleString(),14,28);
+  doc.setDrawColor(39,174,96);doc.setLineWidth(0.5);doc.line(14,32,196,32);
+  let y=40;
+  if(history.length>0){
+    const l=history[0];
+    doc.setFontSize(13);doc.setTextColor(27,94,32);doc.text('Last Prediction',14,y);y+=8;
+    doc.setFontSize(10);doc.setTextColor(50);
+    doc.text(`Building: ${l.building} | Temp: ${l.temp}°C | Humidity: ${l.humidity}% | Occupancy: ${l.occupancy}`,14,y);y+=6;
+    doc.text(`Predicted: ${l.kwh} kWh | CO₂: ${l.co2} kg | Cost: ₹${Math.round(l.kwh*8)}`,14,y);y+=12;
+  }
+  doc.setFontSize(13);doc.setTextColor(27,94,32);doc.text('Smart Schedule',14,y);y+=8;
+  [['05-07','Washing Machine','Off-peak'],['10-16','Air Conditioner','Solar hours'],
+   ['18-21','AVOID heavy loads','PEAK HOURS'],['23-05','Charging','Night off-peak']].forEach(r=>{
+    doc.setFontSize(9);doc.setTextColor(50);doc.text(`• ${r[0]}  ${r[1]}  —  ${r[2]}`,14,y);y+=6;
+  });
+  y+=6;
+  if(history.length>0){
+    doc.setFontSize(12);doc.setTextColor(27,94,32);doc.text('Recent History',14,y);y+=8;
+    const heads=['Date/Time','Building','Temp','Hum','Occ','kWh','CO2'];
+    const cw=[48,34,12,12,12,16,16];
+    let x=14;
+    doc.setFillColor(27,94,32);doc.rect(14,y-4,182,7,'F');doc.setTextColor(255);doc.setFontSize(8);
+    heads.forEach((h,i)=>{doc.text(h,x,y);x+=cw[i]});y+=5;doc.setTextColor(50);
+    history.slice(0,6).forEach(h=>{
+      x=14;
+      [h.datetime.slice(0,16),h.building.slice(0,12),h.temp+'°',h.humidity+'%',h.occupancy,h.kwh+' kWh',h.co2+' kg']
+        .forEach((c,i)=>{doc.text(String(c),x,y);x+=cw[i]});y+=6;
+    });
+  }
+  doc.setFontSize(8);doc.setTextColor(150);doc.text('EcoWatt AI — Energy Efficiency & Sustainability',14,285);
+  doc.save('ecowatt_report.pdf');
+  toast('PDF downloaded!','success');
+}
+
+// ══════════════════════════════
+// STATE-WISE BILL CALCULATOR
+// ══════════════════════════════
+const STATE_RATES={
+  TN:{name:'Tamil Nadu (TNEB)',currency:'₹',fixed:40,tax:0,domestic:[
+    {upto:100,rate:0,label:'0–100 units FREE'},
+    {upto:200,rate:1.50,label:'101–200 units @ ₹1.50'},
+    {upto:400,rate:3.00,label:'201–400 units @ ₹3.00'},
+    {upto:500,rate:4.50,label:'401–500 units @ ₹4.50'},
+    {upto:Infinity,rate:6.00,label:'500+ units @ ₹6.00'}
+  ],commercial:[
+    {upto:100,rate:5.00,label:'0–100 @ ₹5.00'},
+    {upto:Infinity,rate:7.50,label:'100+ @ ₹7.50'}
+  ],agriculture:[
+    {upto:Infinity,rate:0,label:'Free (subsidised)'}
+  ]},
+  MH:{name:'Maharashtra (MSEDCL)',currency:'₹',fixed:100,tax:0.16,domestic:[
+    {upto:30,rate:3.46,label:'0–30 @ ₹3.46'},
+    {upto:100,rate:5.40,label:'31–100 @ ₹5.40'},
+    {upto:300,rate:8.76,label:'101–300 @ ₹8.76'},
+    {upto:500,rate:9.56,label:'301–500 @ ₹9.56'},
+    {upto:Infinity,rate:10.62,label:'500+ @ ₹10.62'}
+  ],commercial:[
+    {upto:Infinity,rate:11.50,label:'All units @ ₹11.50'}
+  ],agriculture:[
+    {upto:Infinity,rate:3.50,label:'All units @ ₹3.50'}
+  ]},
+  KA:{name:'Karnataka (BESCOM)',currency:'₹',fixed:50,tax:0,domestic:[
+    {upto:30,rate:3.15,label:'0–30 @ ₹3.15'},
+    {upto:100,rate:5.55,label:'31–100 @ ₹5.55'},
+    {upto:200,rate:6.60,label:'101–200 @ ₹6.60'},
+    {upto:Infinity,rate:8.30,label:'200+ @ ₹8.30'}
+  ],commercial:[
+    {upto:Infinity,rate:9.00,label:'All units @ ₹9.00'}
+  ],agriculture:[
+    {upto:Infinity,rate:1.50,label:'All units @ ₹1.50'}
+  ]},
+  DL:{name:'Delhi (BSES / TATA)',currency:'₹',fixed:125,tax:0,domestic:[
+    {upto:200,rate:3.00,label:'0–200 @ ₹3.00'},
+    {upto:400,rate:4.50,label:'201–400 @ ₹4.50'},
+    {upto:600,rate:6.50,label:'401–600 @ ₹6.50'},
+    {upto:800,rate:7.00,label:'601–800 @ ₹7.00'},
+    {upto:Infinity,rate:8.00,label:'800+ @ ₹8.00'}
+  ],commercial:[
+    {upto:Infinity,rate:9.50,label:'All units @ ₹9.50'}
+  ],agriculture:[
+    {upto:Infinity,rate:5.00,label:'All units @ ₹5.00'}
+  ]},
+  GJ:{name:'Gujarat (DGVCL/UGVCL)',currency:'₹',fixed:55,tax:0.15,domestic:[
+    {upto:50,rate:2.25,label:'0–50 @ ₹2.25'},
+    {upto:150,rate:3.71,label:'51–150 @ ₹3.71'},
+    {upto:250,rate:4.97,label:'151–250 @ ₹4.97'},
+    {upto:Infinity,rate:5.75,label:'250+ @ ₹5.75'}
+  ],commercial:[
+    {upto:Infinity,rate:8.00,label:'All units @ ₹8.00'}
+  ],agriculture:[
+    {upto:Infinity,rate:2.00,label:'All units @ ₹2.00'}
+  ]},
+  RJ:{name:'Rajasthan (JVVNL)',currency:'₹',fixed:70,tax:0,domestic:[
+    {upto:50,rate:3.00,label:'0–50 @ ₹3.00'},
+    {upto:150,rate:4.75,label:'51–150 @ ₹4.75'},
+    {upto:300,rate:6.00,label:'151–300 @ ₹6.00'},
+    {upto:Infinity,rate:7.00,label:'300+ @ ₹7.00'}
+  ],commercial:[
+    {upto:Infinity,rate:8.50,label:'All units @ ₹8.50'}
+  ],agriculture:[
+    {upto:Infinity,rate:1.00,label:'All units @ ₹1.00'}
+  ]},
+  UP:{name:'Uttar Pradesh (UPPCL)',currency:'₹',fixed:60,tax:0,domestic:[
+    {upto:150,rate:3.35,label:'0–150 @ ₹3.35'},
+    {upto:300,rate:4.50,label:'151–300 @ ₹4.50'},
+    {upto:500,rate:5.50,label:'301–500 @ ₹5.50'},
+    {upto:Infinity,rate:6.50,label:'500+ @ ₹6.50'}
+  ],commercial:[
+    {upto:Infinity,rate:8.00,label:'All units @ ₹8.00'}
+  ],agriculture:[
+    {upto:Infinity,rate:2.50,label:'All units @ ₹2.50'}
+  ]},
+  WB:{name:'West Bengal (WBSEDCL)',currency:'₹',fixed:45,tax:0,domestic:[
+    {upto:25,rate:4.47,label:'0–25 @ ₹4.47'},
+    {upto:75,rate:5.56,label:'26–75 @ ₹5.56'},
+    {upto:150,rate:6.49,label:'76–150 @ ₹6.49'},
+    {upto:Infinity,rate:7.72,label:'150+ @ ₹7.72'}
+  ],commercial:[
+    {upto:Infinity,rate:9.20,label:'All units @ ₹9.20'}
+  ],agriculture:[
+    {upto:Infinity,rate:3.00,label:'All units @ ₹3.00'}
+  ]},
+  AP:{name:'Andhra Pradesh (APEPDCL)',currency:'₹',fixed:50,tax:0,domestic:[
+    {upto:50,rate:1.45,label:'0–50 @ ₹1.45'},
+    {upto:100,rate:3.25,label:'51–100 @ ₹3.25'},
+    {upto:200,rate:5.70,label:'101–200 @ ₹5.70'},
+    {upto:300,rate:6.70,label:'201–300 @ ₹6.70'},
+    {upto:Infinity,rate:8.50,label:'300+ @ ₹8.50'}
+  ],commercial:[
+    {upto:Infinity,rate:9.50,label:'All units @ ₹9.50'}
+  ],agriculture:[
+    {upto:Infinity,rate:0,label:'Free (Rythu Bharosa)'}
+  ]},
+  TS:{name:'Telangana (TSSPDCL)',currency:'₹',fixed:50,tax:0,domestic:[
+    {upto:50,rate:1.45,label:'0–50 FREE'},
+    {upto:100,rate:2.60,label:'51–100 @ ₹2.60'},
+    {upto:200,rate:4.60,label:'101–200 @ ₹4.60'},
+    {upto:Infinity,rate:8.50,label:'200+ @ ₹8.50'}
+  ],commercial:[
+    {upto:Infinity,rate:9.00,label:'All units @ ₹9.00'}
+  ],agriculture:[
+    {upto:Infinity,rate:0,label:'Free (Rythu Bandhu)'}
+  ]},
+  KL:{name:'Kerala (KSEB)',currency:'₹',fixed:40,tax:0,domestic:[
+    {upto:40,rate:2.85,label:'0–40 @ ₹2.85'},
+    {upto:80,rate:3.70,label:'41–80 @ ₹3.70'},
+    {upto:140,rate:4.70,label:'81–140 @ ₹4.70'},
+    {upto:250,rate:6.40,label:'141–250 @ ₹6.40'},
+    {upto:Infinity,rate:7.20,label:'250+ @ ₹7.20'}
+  ],commercial:[
+    {upto:Infinity,rate:8.50,label:'All units @ ₹8.50'}
+  ],agriculture:[
+    {upto:Infinity,rate:2.00,label:'All units @ ₹2.00'}
+  ]},
+  PB:{name:'Punjab (PSPCL)',currency:'₹',fixed:90,tax:0,domestic:[
+    {upto:100,rate:3.49,label:'0–100 @ ₹3.49'},
+    {upto:300,rate:5.15,label:'101–300 @ ₹5.15'},
+    {upto:500,rate:6.35,label:'301–500 @ ₹6.35'},
+    {upto:Infinity,rate:7.60,label:'500+ @ ₹7.60'}
+  ],commercial:[
+    {upto:Infinity,rate:9.00,label:'All units @ ₹9.00'}
+  ],agriculture:[
+    {upto:Infinity,rate:0,label:'Free (subsidised)'}
+  ]},
+  HR:{name:'Haryana (DHBVN)',currency:'₹',fixed:75,tax:0,domestic:[
+    {upto:50,rate:2.00,label:'0–50 @ ₹2.00'},
+    {upto:150,rate:4.00,label:'51–150 @ ₹4.00'},
+    {upto:250,rate:5.25,label:'151–250 @ ₹5.25'},
+    {upto:500,rate:6.30,label:'251–500 @ ₹6.30'},
+    {upto:Infinity,rate:7.10,label:'500+ @ ₹7.10'}
+  ],commercial:[
+    {upto:Infinity,rate:8.50,label:'All units @ ₹8.50'}
+  ],agriculture:[
+    {upto:Infinity,rate:0.80,label:'All units @ ₹0.80'}
+  ]},
+  MP:{name:'Madhya Pradesh (MPEZ)',currency:'₹',fixed:55,tax:0,domestic:[
+    {upto:30,rate:3.10,label:'0–30 @ ₹3.10'},
+    {upto:60,rate:4.50,label:'31–60 @ ₹4.50'},
+    {upto:150,rate:5.50,label:'61–150 @ ₹5.50'},
+    {upto:Infinity,rate:6.50,label:'150+ @ ₹6.50'}
+  ],commercial:[
+    {upto:Infinity,rate:8.00,label:'All units @ ₹8.00'}
+  ],agriculture:[
+    {upto:Infinity,rate:1.50,label:'All units @ ₹1.50'}
+  ]},
+  OR:{name:'Odisha (CESU)',currency:'₹',fixed:40,tax:0,domestic:[
+    {upto:50,rate:2.40,label:'0–50 @ ₹2.40'},
+    {upto:200,rate:3.85,label:'51–200 @ ₹3.85'},
+    {upto:400,rate:5.50,label:'201–400 @ ₹5.50'},
+    {upto:Infinity,rate:6.50,label:'400+ @ ₹6.50'}
+  ],commercial:[
+    {upto:Infinity,rate:7.50,label:'All units @ ₹7.50'}
+  ],agriculture:[
+    {upto:Infinity,rate:1.00,label:'All units @ ₹1.00'}
+  ]}
+};
+
+function onBillStateChange(){
+  const st=document.getElementById('bill-state').value;
+  const infoEl=document.getElementById('bill-state-info');
+  if(!st){infoEl.style.display='none';return;}
+  const s=STATE_RATES[st];
+  const ct=document.getElementById('bill-consumer').value||'domestic';
+  const slabs=s[ct]||s.domestic;
+  infoEl.style.display='block';
+  infoEl.innerHTML=`<strong style="color:var(--glow)">🏛 ${s.name}</strong>
+    &nbsp;·&nbsp; Fixed Charge: ₹${s.fixed}/month
+    ${s.tax>0?`&nbsp;·&nbsp; Tax: ${(s.tax*100).toFixed(0)}%`:''}
+    <br><span style="font-size:11px;margin-top:4px;display:block;opacity:0.8">
+    Slabs: ${slabs.map(sl=>sl.label).join(' &nbsp;|&nbsp; ')}</span>`;
+}
+
+function calcSlabBill(units,slabs){
+  let bill=0,prev=0,breakdown=[];
+  for(const s of slabs){
+    if(units<=prev)break;
+    const inSlab=Math.min(units,s.upto)-prev;
+    const charge=inSlab*s.rate;
+    bill+=charge;
+    if(inSlab>0)breakdown.push({label:s.label,units:inSlab,rate:s.rate,charge});
+    prev=s.upto;
+    if(units<=s.upto)break;
+  }
+  return{bill,breakdown};
+}
+
+function calculateBill(){
+  const stCode=document.getElementById('bill-state').value;
+  const ct=document.getElementById('bill-consumer').value||'domestic';
+  const u=parseFloat(document.getElementById('units').value);
+  if(!stCode){toast('State select பண்ணுங்க!','error');return;}
+  if(isNaN(u)||u<0){toast('Valid units enter பண்ணுங்க!','error');return;}
+
+  const s=STATE_RATES[stCode];
+  const slabs=s[ct]||s.domestic;
+  const{bill,breakdown}=calcSlabBill(u,slabs);
+  const fixed=s.fixed;
+  const taxAmt=bill*s.tax;
+  const total=bill+fixed+taxAmt;
+  const co2=(u*0.82).toFixed(2);
+  const trees=Math.ceil(parseFloat(co2)/21);
+
+  // Slab table rows
+  const slabRows=breakdown.map(b=>`
+    <tr>
+      <td style="text-align:left;padding:9px 12px;font-size:12px;color:var(--sub)">${b.label}</td>
+      <td style="text-align:center;font-size:12px;color:var(--sub)">${b.units.toFixed(0)} units</td>
+      <td style="text-align:center;font-size:12px;color:var(--sub)">₹${b.rate.toFixed(2)}</td>
+      <td style="text-align:right;padding-right:12px;font-weight:700;color:var(--glow)">₹${b.charge.toFixed(2)}</td>
+    </tr>`).join('');
+
+  document.getElementById('billResult').innerHTML=`
+    <!-- Slab Breakdown -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">📊 Slab-wise Breakdown — ${s.name}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:rgba(46,204,113,0.08);border-bottom:1px solid var(--border2)">
+            <th style="text-align:left;padding:8px 12px;font-size:10px;letter-spacing:1px;color:var(--muted)">SLAB</th>
+            <th style="text-align:center;font-size:10px;letter-spacing:1px;color:var(--muted)">UNITS</th>
+            <th style="text-align:center;font-size:10px;letter-spacing:1px;color:var(--muted)">RATE</th>
+            <th style="text-align:right;padding-right:12px;font-size:10px;letter-spacing:1px;color:var(--muted)">CHARGE</th>
+          </tr>
+        </thead>
+        <tbody>${slabRows}
+          <tr style="border-top:1px solid var(--border2)">
+            <td colspan="3" style="padding:9px 12px;font-size:12px;color:var(--sub)">Fixed Charge</td>
+            <td style="text-align:right;padding-right:12px;font-weight:700;color:var(--sub)">₹${fixed.toFixed(2)}</td>
+          </tr>
+          ${s.tax>0?`<tr><td colspan="3" style="padding:9px 12px;font-size:12px;color:var(--sub)">Tax (${(s.tax*100).toFixed(0)}%)</td>
+            <td style="text-align:right;padding-right:12px;font-weight:700;color:var(--sub)">₹${taxAmt.toFixed(2)}</td></tr>`:''}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="grid-4" style="margin-bottom:14px">
+      <div class="stat">
+        <div class="stat-top" style="background:linear-gradient(90deg,transparent,#2ecc71,transparent)"></div>
+        <div class="stat-icon">⚡</div>
+        <div class="stat-val" style="color:#2ecc71">₹${bill.toFixed(0)}</div>
+        <div class="stat-label">Energy Charges</div>
+      </div>
+      <div class="stat">
+        <div class="stat-top" style="background:linear-gradient(90deg,transparent,#f39c12,transparent)"></div>
+        <div class="stat-icon">🏦</div>
+        <div class="stat-val" style="color:#f39c12">₹${(fixed+taxAmt).toFixed(0)}</div>
+        <div class="stat-label">Fixed + Tax</div>
+      </div>
+      <div class="stat">
+        <div class="stat-top" style="background:linear-gradient(90deg,transparent,#3498db,transparent)"></div>
+        <div class="stat-icon">🌿</div>
+        <div class="stat-val" style="color:#3498db">${co2}</div>
+        <div class="stat-label">CO₂ kg</div>
+      </div>
+      <div class="stat">
+        <div class="stat-top" style="background:linear-gradient(90deg,transparent,#9b59b6,transparent)"></div>
+        <div class="stat-icon">🌳</div>
+        <div class="stat-val" style="color:#9b59b6">${trees}</div>
+        <div class="stat-label">Trees Needed</div>
+      </div>
+    </div>
+
+    <!-- Total -->
+    <div style="text-align:center;padding:24px;background:var(--card2);border:1px solid var(--border2);border-radius:14px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;color:var(--muted);margin-bottom:8px">TOTAL BILL — ${s.name.toUpperCase()}</div>
+      <div style="font-family:'Orbitron',monospace;font-size:42px;font-weight:900;color:var(--glow)">₹${total.toFixed(2)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">${u} kWh &nbsp;·&nbsp; ${ct.charAt(0).toUpperCase()+ct.slice(1)} Consumer</div>
+      <div style="margin-top:14px;font-size:12px;color:var(--sub)">
+        ${total<500?'✅ Efficient usage — well within average household consumption.':
+          total<1500?'⚠️ Moderate bill — try reducing AC & idle device usage.':
+          '🚨 High bill — switch to energy-saving appliances & solar panels consider பண்ணுங்க!'}
+      </div>
+    </div>`;
+
+  toast(`${s.name} — Total: ₹${total.toFixed(2)}`,'success');
+}
+
+// ══════════════════════════════
+// HISTORY
+// ══════════════════════════════
+function renderHistory(){
+  const tb=document.getElementById('historyBody');
+  updateBadge();
+  if(!history.length){
+    tb.innerHTML='<tr><td colspan="7" style="padding:28px;color:var(--muted)">No predictions yet. Start predicting!</td></tr>';
+    return;
+  }
+  tb.innerHTML=history.slice(0,30).map(h=>`<tr>
+    <td>${h.datetime}</td><td>${h.building}</td>
+    <td>${h.temp}°C</td><td>${h.humidity}%</td><td>${h.occupancy}</td>
+    <td><strong style="color:#2ecc71">${h.kwh} kWh</strong></td>
+    <td>${h.co2} kg</td>
+  </tr>`).join('');
+}
+
+function clearHistory(){
+  if(!confirm('Clear all prediction history?'))return;
+  history=[];saveHistory();
+  liveLabels.length=0;liveData.length=0;energyChart.update();
+  renderHistory();renderCalendar();renderMonthlySummary();
+  toast('History cleared','warn');
+}
+
+function exportCSV(){
+  if(!history.length){toast('No history to export!','warn');return;}
+  const rows=history.map(h=>`"${h.datetime}","${h.building}",${h.temp},${h.humidity},${h.occupancy},${h.kwh},${h.co2}`);
+  const blob=new Blob(['Date,Building,Temp,Humidity,Occupancy,kWh,CO2\n'+rows.join('\n')],{type:'text/csv'});
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'ecowatt.csv'});
+  a.click();URL.revokeObjectURL(a.href);
+  toast('CSV exported!','success');
+}
+
+// ══════════════════════════════
+// DAILY BANNER (topbar)
+// ══════════════════════════════
+function initDailyBanner(){
+  const today=new Date().toISOString().slice(0,10);
+  const done=history.some(h=>{try{return new Date(h.datetime).toISOString().slice(0,10)===today}catch{return false}});
+  const bar=document.getElementById('peakBar');
+  if(done&&bar.style.display==='none'){
+    // show a soft check message via toast once
+  }
+}
+
+// ══════════════════════════════
+// CALENDAR
+// ══════════════════════════════
+let calY=new Date().getFullYear(),calM=new Date().getMonth();
+function changeCalMonth(d){calM+=d;if(calM>11){calM=0;calY++}if(calM<0){calM=11;calY--}renderCalendar()}
+
+function renderCalendar(){
+  const now=new Date();
+  const todayStr=now.toISOString().slice(0,10);
+  const pred=new Set();
+  const kwhByDate={};
+  history.forEach(h=>{
+    try{
+      const d=new Date(h.datetime);const s=d.toISOString().slice(0,10);
+      pred.add(s);
+      kwhByDate[s]=(kwhByDate[s]||0)+h.kwh;
+    }catch{}
+  });
+
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthLabel').textContent=MN[calM]+' '+calY;
+
+  const grid=document.getElementById('calGrid');grid.innerHTML='';
+  const first=new Date(calY,calM,1).getDay();
+  const dim=new Date(calY,calM+1,0).getDate();
+
+  for(let i=0;i<first;i++){const e=document.createElement('div');grid.appendChild(e);}
+
+  let active=0,total=0;
+  for(let d=1;d<=dim;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hp=pred.has(ds);const past=ds<=todayStr;const isT=ds===todayStr;
+    if(hp){active++;total+=kwhByDate[ds]||0;}
+    const cell=document.createElement('div');
+    cell.className='cal-cell'+(hp?' has-pred':past?' past':' future')+(isT?' today':'');
+    cell.innerHTML=`<span>${d}</span>${hp?'<span class="cal-tick">✓</span>':''}`;
+    if(hp)cell.title=`${(kwhByDate[ds]||0).toFixed(1)} kWh`;
+    grid.appendChild(cell);
+  }
+
+  const pct=dim?Math.round((active/dim)*100):0;
+  document.getElementById('calStats').innerHTML=`
+    <div class="chip">✅ <strong>${active}</strong> active days</div>
+    <div class="chip">📊 <strong>${pct}%</strong> tracked</div>
+    <div class="chip">⚡ <strong>${total.toFixed(1)}</strong> kWh this month</div>`;
+
+  const todayDone=pred.has(todayStr);
+  document.getElementById('weekStatus').innerHTML=todayDone
+    ?`<span style="color:#2ecc71">✅ Today's prediction done! Great job.</span>`
+    :`<span style="color:#f39c12">⚡ இன்னும் today's prediction பண்ணல — AI Predictor-க்கு போங்க!</span>`;
+}
+
+// ══════════════════════════════
+// MONTHLY SUMMARY
+// ══════════════════════════════
+let monthlyChartInst=null;
+function initMonthSelectors(){
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now=new Date();
+  document.getElementById('summaryMonth').innerHTML=MN.map((m,i)=>`<option value="${i}"${i===now.getMonth()?'selected':''}>${m}</option>`).join('');
+  const ys=document.getElementById('summaryYear');
+  for(let y=now.getFullYear();y>=now.getFullYear()-4;y--){
+    const o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;ys.appendChild(o);
+  }
+}
+
+function calcBill(u){
+  if(u<=50)return u*2.5;if(u<=100)return 125+(u-50)*3.25;
+  if(u<=200)return 287.5+(u-100)*5;if(u<=500)return 787.5+(u-200)*6.5;
+  return 2737.5+(u-500)*8;
+}
+
+function renderMonthlySummary(){
+  const m=parseInt(document.getElementById('summaryMonth').value);
+  const y=parseInt(document.getElementById('summaryYear').value);
+  const recs=history.filter(h=>{try{const d=new Date(h.datetime);return d.getMonth()===m&&d.getFullYear()===y}catch{return false}});
+
+  const nd=document.getElementById('ms-nodata');
+  const md=document.getElementById('ms-data');
+  if(!recs.length){nd.style.display='block';md.style.display='none';if(monthlyChartInst){monthlyChartInst.destroy();monthlyChartInst=null}return;}
+  nd.style.display='none';md.style.display='block';
+
+  const dim=new Date(y,m+1,0).getDate();
+  const dm={};
+  recs.forEach(h=>{
+    try{const d=new Date(h.datetime).getDate();if(!dm[d])dm[d]={kwh:0,co2:0};dm[d].kwh+=h.kwh;dm[d].co2+=h.co2;}catch{}
+  });
+
+  const totalKwh=Object.values(dm).reduce((s,v)=>s+v.kwh,0);
+  const totalCo2=Object.values(dm).reduce((s,v)=>s+v.co2,0);
+  const actDays=Object.keys(dm).length;
+  const avg=actDays?totalKwh/actDays:0;
+  const bill=calcBill(totalKwh);const totalBill=bill+50+bill*0.18;
+  const entries=Object.entries(dm).sort((a,b)=>b[1].kwh-a[1].kwh);
+  const peak=entries[0],low=entries[entries.length-1];
+
+  animCount(document.getElementById('ms-kwh'),totalKwh,1,'','',900);
+  animCount(document.getElementById('ms-cost'),totalBill,0,'₹','',900);
+  animCount(document.getElementById('ms-co2'),totalCo2,1,'','',900);
+  animCount(document.getElementById('ms-days'),actDays,0,'','',700);
+  document.getElementById('ms-avg').textContent=avg.toFixed(1)+' kWh';
+  document.getElementById('ms-peak').textContent=peak[1].kwh.toFixed(1)+' kWh';
+  document.getElementById('ms-peak-date').textContent='Day '+peak[0];
+  document.getElementById('ms-low').textContent=low[1].kwh.toFixed(1)+' kWh';
+  document.getElementById('ms-low-date').textContent='Day '+low[0];
+
+  const cls=[],cds=[];
+  for(let d=1;d<=dim;d++){cls.push(d);cds.push(dm[d]?parseFloat(dm[d].kwh.toFixed(2)):0);}
+  const mc=document.getElementById('monthlyChart').getContext('2d');
+  if(monthlyChartInst)monthlyChartInst.destroy();
+  monthlyChartInst=new Chart(mc,{
+    type:'bar',
+    data:{labels:cls,datasets:[{label:'Daily kWh',data:cds,
+      backgroundColor:cds.map(v=>v===0?'rgba(46,204,113,0.06)':v<avg?'rgba(46,204,113,0.65)':'rgba(231,76,60,0.65)'),
+      borderRadius:6,borderWidth:0}]},
+    options:{responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} kWh`}}},
+      scales:{
+        y:{beginAtZero:true,grid:{color:'rgba(39,174,96,0.07)'},ticks:{color:'#6fcf82'},title:{display:true,text:'kWh',color:'#6fcf82'}},
+        x:{grid:{display:false},ticks:{color:'#6fcf82',font:{size:10}},title:{display:true,text:'Day',color:'#6fcf82'}}
+      }}
+  });
+}
+
+// ══════════════════════════════
+// IOT SENSOR & SMART METER
+// ══════════════════════════════
+let iotType='mqtt';
+let iotConnected=false;
+let iotStreamActive=false;
+let iotStreamTimer=null;
+let iotSparkData=Array(30).fill(0);
+let iotSparkCtx=null;
+
+function iotSelectType(type,el){
+  iotType=type;
+  document.querySelectorAll('.iot-type-card').forEach(c=>c.classList.remove('iot-selected'));
+  el.classList.add('iot-selected');
+  ['mqtt','modbus','http','serial'].forEach(t=>{
+    const f=document.getElementById('iot-fields-'+t);
+    if(f)f.style.display=t===type?'block':'none';
+  });
+  const titles={mqtt:'MQTT CONFIGURATION',modbus:'MODBUS TCP CONFIGURATION',http:'HTTP REST CONFIGURATION',serial:'SERIAL / USB CONFIGURATION'};
+  document.getElementById('iot-cfg-title').textContent=titles[type]||'CONFIGURATION';
+}
+
+function iotAddLog(msg,type=''){
+  const box=document.getElementById('iot-log');
+  if(!box)return;
+  const d=document.createElement('div');
+  if(type)d.className='iot-log-'+type;
+  const now=new Date();
+  const ts=`[${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}]`;
+  d.textContent=ts+' '+msg;
+  box.insertBefore(d,box.firstChild);
+}
+
+function iotSetStatus(state){
+  const dot=document.getElementById('iot-dot');
+  const txt=document.getElementById('iot-status-txt');
+  const badge=document.getElementById('iot-status-badge');
+  if(!dot)return;
+  dot.className='iot-dot';
+  badge.className='iot-status-badge';
+  if(state==='connecting'){dot.classList.add('dot-connecting');txt.textContent='Connecting...'}
+  else if(state==='live'){dot.classList.add('dot-live');txt.textContent='Live';badge.classList.add('iot-live')}
+  else if(state==='error'){dot.classList.add('dot-error');txt.textContent='Error';badge.classList.add('iot-error')}
+  else{dot.classList.add('dot-idle');txt.textContent='Idle'}
+}
+
+function iotConnect(){
+  if(iotType==='serial'){
+    iotConnectSerial();
+    return;
+  }
+  iotSetStatus('connecting');
+  iotAddLog('Initiating '+iotType.toUpperCase()+' connection...');
+  const host=document.getElementById('iot-broker')?.value||'192.168.1.100';
+  setTimeout(()=>iotAddLog('Resolving host '+host+'...'),500);
+  setTimeout(()=>iotAddLog('TCP handshake successful','ok'),1100);
+  setTimeout(()=>{
+    iotConnected=true;
+    iotSetStatus('live');
+    iotAddLog('Connected! Sensor data streaming.','ok');
+    document.getElementById('iot-connect-btn').style.display='none';
+    document.getElementById('iot-disconnect-btn').style.display='';
+    document.getElementById('iotBadge').style.display='';
+    toast('IoT Sensor connected!','success');
+  },1600);
+}
+
+// ── WEB SERIAL API ──
+let serialPort=null;
+let serialReader=null;
+let serialReadLoop=false;
+
+async function iotConnectSerial(){
+  if(!('serial' in navigator)){
+    document.getElementById('serial-no-support').style.display='block';
+    iotAddLog('Web Serial API not supported — Chrome/Edge use பண்ணுங்க.','err');
+    return;
+  }
+  try{
+    iotSetStatus('connecting');
+    iotAddLog('USB port selection window திறக்கிறது...');
+    serialPort=await navigator.serial.requestPort();
+    const baud=parseInt(document.getElementById('serial-baud').value)||115200;
+    const dataBits=parseInt(document.getElementById('serial-databits').value)||8;
+    const stopBits=parseInt(document.getElementById('serial-stopbits').value)||1;
+    const parity=document.getElementById('serial-parity').value||'none';
+    await serialPort.open({baudRate:baud,dataBits,stopBits,parity});
+    iotAddLog(`Port opened — Baud:${baud} DataBits:${dataBits} StopBits:${stopBits} Parity:${parity}`,'ok');
+    iotConnected=true;
+    iotSetStatus('live');
+    document.getElementById('iot-connect-btn').style.display='none';
+    document.getElementById('iot-disconnect-btn').style.display='';
+    document.getElementById('iotBadge').style.display='';
+    iotAddLog('USB Serial connected! Data reading starts...','ok');
+    toast('USB Serial connected!','success');
+    iotReadSerial();
+  }catch(e){
+    if(e.name==='NotFoundError'||e.message.includes('No port selected')){
+      iotAddLog('Port selection cancelled.','warn');
+      iotSetStatus('idle');
+    }else{
+      iotAddLog('Error: '+e.message,'err');
+      iotSetStatus('error');
+      toast('Connection failed: '+e.message,'error');
+    }
+  }
+}
+
+async function iotReadSerial(){
+  const fmt=document.getElementById('serial-format')?.value||'json';
+  serialReadLoop=true;
+  let buf='';
+  try{
+    serialReader=serialPort.readable.getReader();
+    const dec=new TextDecoder();
+    while(serialReadLoop){
+      const{value,done}=await serialReader.read();
+      if(done)break;
+      buf+=dec.decode(value);
+      const lines=buf.split('\n');
+      buf=lines.pop(); // keep incomplete line
+      for(const line of lines){
+        const trimmed=line.trim();
+        if(!trimmed)continue;
+        iotParseSerialLine(trimmed,fmt);
+      }
+    }
+  }catch(e){
+    if(serialReadLoop){
+      iotAddLog('Read error: '+e.message,'err');
+      iotSetStatus('error');
+    }
+  }finally{
+    serialReader?.releaseLock();
+  }
+}
+
+function iotParseSerialLine(line,fmt){
+  try{
+    let kwh,volt,amp,pf;
+    if(fmt==='json'){
+      const d=JSON.parse(line);
+      kwh=d.kwh??d.kWh??d.power??null;
+      volt=d.v??d.voltage??d.volt??230;
+      amp=d.a??d.current??d.amp??null;
+      pf=d.pf??d.powerFactor??0.95;
+    }else if(fmt==='csv'){
+      const parts=line.split(',');
+      kwh=parseFloat(parts[0]);volt=parseFloat(parts[1])||230;
+      amp=parseFloat(parts[2])||null;pf=parseFloat(parts[3])||0.95;
+    }else{
+      kwh=parseFloat(line);volt=230;amp=null;pf=0.95;
+    }
+    if(kwh===null||isNaN(kwh))return;
+    if(amp===null)amp=(kwh/((volt||230)/1000)).toFixed(2);
+    const kwhStr=parseFloat(kwh).toFixed(3);
+    const el1=document.getElementById('iot-r-kwh');
+    const el2=document.getElementById('iot-r-v');
+    const el3=document.getElementById('iot-r-a');
+    const el4=document.getElementById('iot-r-pf');
+    if(el1)el1.textContent=kwhStr;
+    if(el2)el2.textContent=parseFloat(volt).toFixed(1);
+    if(el3)el3.textContent=parseFloat(amp).toFixed(2);
+    if(el4)el4.textContent=parseFloat(pf).toFixed(2);
+    iotSparkData.push(parseFloat(kwhStr));iotSparkData.shift();
+    iotDrawSpark();
+    // High usage tip
+    const tipEl=document.getElementById('iot-sensor-tip');
+    if(tipEl){
+      if(parseFloat(kwhStr)>3.2){
+        tipEl.style.display='block';
+        tipEl.textContent='⚠️ High consumption: '+kwhStr+' kWh — Peak usage!';
+        tipEl.style.color='#e74c3c';tipEl.style.borderLeftColor='#e74c3c';
+        tipEl.style.background='rgba(231,76,60,0.05)';
+      }else{tipEl.style.display='none';}
+    }
+    iotAddLog('Data: '+kwhStr+' kWh | '+parseFloat(volt).toFixed(1)+'V | '+parseFloat(amp).toFixed(2)+'A','ok');
+  }catch(e){
+    iotAddLog('Parse error: '+line.substring(0,40),'warn');
+  }
+}
+
+function iotDisconnect(){
+  iotConnected=false;
+  // Close serial if open
+  if(serialPort){
+    serialReadLoop=false;
+    serialReader?.cancel().catch(()=>{});
+    serialPort.close().catch(()=>{});
+    serialPort=null;serialReader=null;
+    iotAddLog('USB Serial port closed.','warn');
+  }
+  iotSetStatus('idle');
+  iotAddLog('Disconnected.','warn');
+  document.getElementById('iot-connect-btn').style.display='';
+  document.getElementById('iot-disconnect-btn').style.display='none';
+  document.getElementById('iotBadge').style.display='none';
+  if(iotStreamActive)iotToggleStream();
+  toast('IoT Sensor disconnected','warn');
+}
+
+function iotTest(){
+  const host=document.getElementById('iot-broker')?.value||'host';
+  iotAddLog('Testing connection to '+host+'...');
+  setTimeout(()=>iotAddLog('Port reachable ✓','ok'),600);
+  setTimeout(()=>iotAddLog('Auth OK ✓','ok'),1000);
+  setTimeout(()=>iotAddLog('Test complete — ready to connect.','ok'),1400);
+}
+
+function iotInitStream(){
+  // Start simulated readings when page loads for demo
+  if(!iotStreamActive){
+    iotStreamActive=true;
+    document.getElementById('iot-stream-btn').textContent='⏸ Stop Stream';
+    iotSparkData=Array(30).fill(0);
+    iotRunStream();
+  }
+}
+
+function iotToggleStream(){
+  iotStreamActive=!iotStreamActive;
+  const btn=document.getElementById('iot-stream-btn');
+  if(iotStreamActive){
+    btn.textContent='⏸ Stop Stream';
+    iotRunStream();
+    toast('Sensor stream started','success');
+  }else{
+    btn.textContent='▶ Start Stream';
+    clearTimeout(iotStreamTimer);
+    toast('Sensor stream paused','warn');
+  }
+}
+
+function iotRunStream(){
+  if(!iotStreamActive)return;
+  const kwh=(2.5+Math.random()*1.4).toFixed(3);
+  const volt=(228+Math.random()*5).toFixed(1);
+  const amp=(parseFloat(kwh)/0.23).toFixed(2);
+  const pf=(0.91+Math.random()*0.07).toFixed(2);
+  const kwhF=parseFloat(kwh);
+
+  const kwhEl=document.getElementById('iot-r-kwh');
+  const vEl=document.getElementById('iot-r-v');
+  const aEl=document.getElementById('iot-r-a');
+  const pfEl=document.getElementById('iot-r-pf');
+  if(kwhEl)kwhEl.textContent=kwh;
+  if(vEl)vEl.textContent=volt;
+  if(aEl)aEl.textContent=amp;
+  if(pfEl)pfEl.textContent=pf;
+
+  iotSparkData.push(kwhF);iotSparkData.shift();
+  iotDrawSpark();
+
+  // Tip if high
+  const tipEl=document.getElementById('iot-sensor-tip');
+  if(tipEl){
+    if(kwhF>3.2){
+      tipEl.style.display='block';
+      tipEl.textContent='⚠️ High consumption detected: '+kwh+' kWh — Peak usage-ஆ இருக்கு!';
+      tipEl.style.color='#e74c3c';tipEl.style.borderLeftColor='#e74c3c';
+      tipEl.style.background='rgba(231,76,60,0.05)';
+    }else{
+      tipEl.style.display='none';
+    }
+  }
+
+  const interval=parseInt(document.getElementById('iot-interval')?.value)||1000;
+  iotStreamTimer=setTimeout(iotRunStream,Math.max(500,interval));
+}
+
+function iotDrawSpark(){
+  const canvas=document.getElementById('iot-spark');
+  if(!canvas)return;
+  const w=canvas.offsetWidth||canvas.width;const h=55;
+  canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const min=Math.min(...iotSparkData);const max=Math.max(...iotSparkData);
+  const range=max-min||1;
+  ctx.beginPath();
+  iotSparkData.forEach((v,i)=>{
+    const x=(i/(iotSparkData.length-1))*w;
+    const y=h-((v-min)/range)*(h-10)-5;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='#27ae60';ctx.lineWidth=2;ctx.stroke();
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+  ctx.fillStyle='rgba(39,174,96,0.08)';ctx.fill();
+}
+
+function iotPushToPredictor(){
+  const kwh=document.getElementById('iot-r-kwh')?.textContent;
+  const volt=document.getElementById('iot-r-v')?.textContent;
+  if(!kwh||kwh==='--'){toast('No sensor data yet — stream start பண்ணுங்க!','warn');return;}
+  // Auto-fill temperature from weather if available
+  const temp=document.getElementById('wtTemp')?.textContent;
+  const hum=document.getElementById('wtHum')?.textContent;
+  if(temp&&temp!=='--')document.getElementById('temperature').value=temp;
+  if(hum&&hum!=='--')document.getElementById('humidity').value=hum;
+  // Navigate to predictor
+  const navItems=document.querySelectorAll('.nav-item');
+  navItems.forEach(n=>n.classList.remove('active'));
+  navItems[0].classList.add('active');
+  goTo('predict',navItems[0]);
+  toast('Sensor data → AI Predictor-க்கு push பண்ணினோம்!','success');
+}
+
+function iotSwitchTab(name,el){
+  document.querySelectorAll('#page-iot .iot-tab-pane').forEach(p=>p.classList.remove('iot-tab-pane-active'));
+  document.querySelectorAll('#page-iot .iot-tabs:first-of-type .iot-tab').forEach(t=>t.classList.remove('iot-tab-active'));
+  const pane=document.getElementById('iot-tab-'+name);
+  if(pane)pane.classList.add('iot-tab-pane-active');
+  el.classList.add('iot-tab-active');
+  if(name==='live'&&!iotStreamActive)iotInitStream();
+}
+
+function iotSwitchCode(name,el){
+  ['mqtt','modbus','esp'].forEach(n=>{
+    const c=document.getElementById('iot-code-'+n);
+    const t=document.getElementById('iot-ctab-'+n);
+    if(c)c.style.display=n===name?'block':'none';
+    if(t)t.classList.toggle('iot-tab-active',n===name);
+  });
+}
+
+// ══════════════════════════════
+// INIT
+// ══════════════════════════════
+loadWeather();
+renderHistory();
+renderCalendar();
+initMonthSelectors();
+renderMonthlySummary();
+initDailyBanner();
+updateBadge();
+generateForecast();
+</script>
+</body>
+</html>

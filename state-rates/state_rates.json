@@ -1,0 +1,30 @@
+{
+  "info": "EcoWatt State-wise Electricity Tariff Rates — 2024-25",
+  "source": "State Electricity Regulatory Commissions (SERC)",
+  "states": {
+    "TN": { "name": "Tamil Nadu (TNEB)", "fixed": 40, "tax": 0,
+      "domestic": [
+        {"upto":100,"rate":0},{"upto":200,"rate":1.50},
+        {"upto":400,"rate":3.00},{"upto":500,"rate":4.50},{"upto":999999,"rate":6.00}
+      ]
+    },
+    "MH": { "name": "Maharashtra (MSEDCL)", "fixed": 100, "tax": 0.16,
+      "domestic": [
+        {"upto":30,"rate":3.46},{"upto":100,"rate":5.40},
+        {"upto":300,"rate":8.76},{"upto":500,"rate":9.56},{"upto":999999,"rate":10.62}
+      ]
+    },
+    "KA": { "name": "Karnataka (BESCOM)", "fixed": 50, "tax": 0,
+      "domestic": [
+        {"upto":30,"rate":3.15},{"upto":100,"rate":5.55},
+        {"upto":200,"rate":6.60},{"upto":999999,"rate":8.30}
+      ]
+    },
+    "DL": { "name": "Delhi (BSES/TATA)", "fixed": 125, "tax": 0,
+      "domestic": [
+        {"upto":200,"rate":3.00},{"upto":400,"rate":4.50},
+        {"upto":600,"rate":6.50},{"upto":800,"rate":7.00},{"upto":999999,"rate":8.00}
+      ]
+    }
+  }
+}
